@@ -1,0 +1,7 @@
+cluster_jobs/run_pipeline.sh experiments/generated_rotations_from_angle/input_new/6eqb_l_u_pnon.pdb experiments/generated_rotations_from_angle/input_new/6eqb_r_u_pnon.pdb /home/jaarts/pipeline/6eqb_60/ /home/jaarts/Restraints/restraintsDE.json /home/jaarts/experiments/filtered_cr_in_60.prm
+
+bash scripts/new_piper.sh /home/nils/stage/input/1ao7_l_u_pnon.pdb /home/nils/stage/input/1ao7_r_u_pnon.pdb /home/nils/stage/output/ /home/nils/stage/input/restraintsDE.json /home/nils/stage/input/filtered_cr_in_60.prm
+
+
+
+/home/jaarts/cluster_jobs/new_piper.sh /home/jaarts/pipeline/input/1ao7_l_u_pnon.pdb /home/jaarts/pipeline/input/1ao7_r_u_pnon.pdb /home/nilss/test/ /home/jaarts/Restraints/restraintsDE.json /home/jaarts/experiments/filtered_cr_in_60.prm
