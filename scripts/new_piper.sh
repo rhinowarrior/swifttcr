@@ -45,9 +45,9 @@ out_prefix=$(basename ${outputdir})
 # python3 scripts/merge_pdbs.py "${outputdir}""${receptor}" "${outputdir}"rotated/ "${outputdir}"merged/
 #python3 /home/jaarts/python_programs/merge_pdbs.py /home/jaarts/pipeline/1ao7/1ao7_l_u_pnon.pdb /home/jaarts/pipeline/1ao7/rotated/ /home/jaarts/pipeline/1ao7/merged/
 wait
-python scripts/pairwise_rmsd.py "${outputdir}"merged "${outputdir}"irmsd.csv A D interface 2
+python scripts/pairwise_rmsd_backup.py "${outputdir}"merged "${outputdir}"irmsd.csv A D interface 2
 wait
 
-python3 scripts/clustering.py "${outputdir}"irmsd.csv > "${outputdir}"clustering.txt
+# python3 scripts/clustering.py "${outputdir}"irmsd.csv > "${outputdir}"clustering.txt
 
 

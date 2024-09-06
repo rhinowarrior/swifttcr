@@ -108,5 +108,5 @@ def pdb2ms_main(outdir):
 
 
 
-if __name__ == "__main__":
-    pdb2ms_main()
+# if __name__ == "__main__":
+#     pdb2ms_main()

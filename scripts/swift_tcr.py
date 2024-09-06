@@ -11,16 +11,16 @@ import clustering
 import io
 from contextlib import redirect_stdout
 
-os.environ["OMP_NUM_THREADS"] = "2"
+#os.environ["OMP_NUM_THREADS"] = "2"
 
-receptor_path = "/home/nils/stage/input/1ao7_l_u_pnon.pdb"
-ligand_path = "/home/nils/stage/input/1ao7_r_u_pnon.pdb"
-output_dir = "/home/nils/stage/output/"
-restraints = "/home/nils/stage/input/restraintsDE.json"
-rotations = "/home/nils/stage/input/filtered_cr_in_60.prm"
+receptor_path = "/home/nils/swifttcr/example/input/1ao7_l_u_pnon.pdb"
+ligand_path = "/home/nils/swifttcr/example/input/1ao7_r_u_pnon.pdb"
+output_dir = "/home/nils/swifttcr/example/output/"
+restraints = "/home/nils/swifttcr/example/input/restraintsDE.json"
+rotations = "/home/nils/swifttcr/example/input/filtered_cr_in_60.prm"
 
-reference_ligand = "/home/nils/stage/input/2bnr_r_u.pdb"
-reference_receptor = "/home/nils/stage/input/2bnr_l_u.pdb"
+reference_ligand = "/home/nils/swifttcr/example/input/2bnr_r_u.pdb"
+reference_receptor = "/home/nils/swifttcr/example/input/2bnr_l_u.pdb"
 
 receptor = os.path.basename(receptor_path)
 print(receptor)
@@ -41,57 +41,62 @@ ligand_ms = ligand_ms.replace(".pdb", ".ms")
 
 out_prefix = "data"
 
-initial_placement.initial_placement_main(receptor_path, ligand_path, output_dir, reference_receptor, reference_ligand)
+#################################################################
 
-pdb2ms.pdb2ms_main(output_dir)
+if __name__ == "__main__":
 
-os.chdir(output_dir)
+    initial_placement.initial_placement_main(receptor_path, ligand_path, output_dir, reference_receptor, reference_ligand)
 
-subprocess.run([
-    "/home/nils/stage/piper/piper_attr",
-    "-k1",
-    "--msur_k=1.0",
-    "--maskr=1.0",
-    "-T", "FFTW_EXHAUSTIVE",
-    "-p", "/home/nils/stage/piper/atoms04.prm",
-    "-f", "/home/nils/stage/piper/coeffs04.prm",
-    "-r", rotations,
-    os.path.join(output_dir, receptor_ms),
-    os.path.join(output_dir, ligand_ms)
-]
-)
+    pdb2ms.pdb2ms_main(output_dir)
 
-print(os.getcwd())
+    os.chdir(output_dir)
 
-postfilter.post_filter_main(output_dir, "ft.000.00", rotations, restraints, receptor_pdb, ligand_pdb, out_prefix)
+    subprocess.run([
+        "/home/nils/swifttcr/piper/piper_attr",
+        "-k1",
+        "--msur_k=1.0",
+        "--maskr=1.0",
+        "-T", "FFTW_EXHAUSTIVE",
+        "-p", "/home/nils/swifttcr/piper/atoms04.prm",
+        "-f", "/home/nils/swifttcr/piper/coeffs04.prm",
+        "-r", rotations,
+        os.path.join(output_dir, receptor_ms),
+        os.path.join(output_dir, ligand_ms)
+    ]
+    )
 
-if not os.path.exists("rotated"):
-    os.mkdir("rotated")
-os.chdir("rotated")
+    print(os.getcwd())
 
-apply_results.apply_results_main(1000, None, None, out_prefix,os.path.join(output_dir, "ft.000.00"), os.path.join(output_dir, rotations), os.path.join(output_dir,ligand_pdb))
+    postfilter.post_filter_main(output_dir, "ft.000.00", rotations, restraints, receptor, ligand, out_prefix)
 
-os.chdir("..")
+    if not os.path.exists("rotated"):
+        os.mkdir("rotated")
+    os.chdir("rotated")
 
-if not os.path.exists("merged"):
-    os.mkdir("merged")
+    apply_results.apply_results_main(100, None, None, out_prefix, os.path.join(output_dir, "ft.000.00"), os.path.join(output_dir, rotations), os.path.join(output_dir,ligand))
 
-merge_pdbs.merge_pdbs_main(ligand,"rotated/", "merged/")
+    os.chdir("..")
 
-print(os.getcwd())
+    if not os.path.exists("merged"):
+        os.mkdir("merged")
 
-# pairwise_rmsd.pairwise_rmsd_main("merged/", "irmsd.csv", "A", "D", "interface", 1)
+    merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged")
 
-# output_file = os.path.join(output_dir, 'clustering.txt')
+    print(os.getcwd())
 
-# output_buffer = io.StringIO()
+    ## Will fix this but i got an error when trying to run it using multiprocessing and this doesn't
+    pairwise_rmsd.pairwise_rmsd_main("merged", "irmsd.csv", "A", "D", "interface", 2)
 
-# with redirect_stdout(output_buffer):
-#     clustering.clustering_main(os.path.join(output_dir, 'irmsd.csv'))
+    output_file = os.path.join(output_dir, 'clustering.txt')
 
-# captured_output = output_buffer.getvalue()
+    output_buffer = io.StringIO()
 
-# with open(output_file, 'w') as file:
-#     file.write(captured_output)
+    with redirect_stdout(output_buffer):
+        clustering.clustering_main(os.path.join(output_dir, 'irmsd.csv'))
 
-# print(f"Output written to {output_file}")
+    captured_output = output_buffer.getvalue()
+
+    with open(output_file, 'w') as file:
+        file.write(captured_output)
+
+    print(f"Output written to {output_file}")

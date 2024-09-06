@@ -136,7 +136,7 @@ def load_stack_xyzr_all(file_names, chain, n_cores):
             total=len(file_names),
             desc="Loading atoms"
         ))
-    # xyzr_list = [load_ligand_ca_xyzr(file, chain) for file in file_names]
+    #xyzr_list = [load_ligand_ca_xyzr(file, chain) for file in file_names]
 
     low = 1e10
     high = 0
@@ -308,7 +308,7 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     return rmsd_list, file_names
 
 
-def pairwise_rmsd_main():
+def pairwise_rmsd_main(models_path, rmsd_file, chain_1, chain_2, rmsd_type, n_cores):
     """Arguments: path/to/pdbs output_file.csv ChainID1 ChainID2 RMSDtype num_cpu_cores
     RMSDtype can be ligand or interface.
     num_cpu_cores is optional and will default to all cores.
@@ -317,14 +317,6 @@ def pairwise_rmsd_main():
     or import this script and call calc_rmsd() with the arguments.)
     """
 
-    #Setting up the paths from the arguments.
-    models_path = sys.argv[1]
-    rmsd_file = sys.argv[2]
-    chain_1 = sys.argv[3]
-    chain_2 = sys.argv[4]
-    rmsd_type = sys.argv[5]
-    n_cores = int(sys.argv[6]) if len(sys.argv) > 6 else mp.cpu_count()
-    
     print(f"{models_path=}")
     print(f"{rmsd_file=}")
     print(f"chains: {chain_1}, {chain_2}")
@@ -332,5 +324,5 @@ def pairwise_rmsd_main():
     print(f"{n_cores=}")
     calc_rmsd(models_path, rmsd_file, chain_1, chain_2, interface_cutoff=10., n_cores=n_cores, type=rmsd_type)
 
-if __name__ == "__main__":
-    pairwise_rmsd_main()
+# if __name__ == "__main__":
+#     pairwise_rmsd_main()
