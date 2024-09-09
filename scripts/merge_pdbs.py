@@ -20,9 +20,6 @@ def rename(p_rec, p_lig, p_out):
 """
 
 def merge_pdbs_main(receptor, ligand, output_dir):
-    # receptor = argv[1]
-    # ligand = argv[2]
-    # output_dir = argv[3]
     p = Path(ligand)
     p_rec = Path(receptor)
     p_out = Path(output_dir)

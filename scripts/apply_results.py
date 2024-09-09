@@ -128,25 +128,6 @@ def apply_ftresults_atom_group(ag,
 
 signal(SIGPIPE, SIG_DFL)
 
-# parser = ArgumentParser(description="")
-# parser.add_argument("--index", "-i", default=None, type=int,
-#                     help="Index of ftresult to apply. Overrides '-n'")
-# parser.add_argument("--limit", "-n", default=None, type=int,
-#                     help="Index of ftresult to apply.")
-# parser.add_argument("--rotation", "-r", default=None, type=int,
-#                     help="Use ftresult with rotation index <r>")
-# parser.add_argument("--out-prefix", default=None,
-#                     help="Prefix of the output pdb file(s)")
-# parser.add_argument("ftfile",
-#                     help="")
-# parser.add_argument("rotations",
-#                     help="")
-# parser.add_argument("pdb_file", type=FileType('r'),
-#                     help="")
-
-
-# args = parser.parse_argsao7_l_u_pnon.pd()
-
 def apply_results_main(limit, index, rotation, out_prefix, ftfile, rotations, pdb_file):
 
     pdb_file = FileType('r')(pdb_file)

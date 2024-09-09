@@ -316,6 +316,8 @@ def pairwise_rmsd_main(models_path, rmsd_file, chain_1, chain_2, rmsd_type, n_co
     (This whole section should be rewritten with argparse,
     or import this script and call calc_rmsd() with the arguments.)
     """
+    
+    # Now uses calc_rmsd() directly.
 
     print(f"{models_path=}")
     print(f"{rmsd_file=}")

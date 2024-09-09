@@ -61,3 +61,25 @@ def check_file_extensions(receptor, ligand, restraints, rotations):
     if not rotations.endswith(".prm"):
         print("Rotations file must be a prm file")
         exit(1)
+
+def check_chains_pdb(receptor, ligand):
+    """Checks if the chains in the pdb files are correct
+    
+    Args:
+        receptor (str): Path to receptor pdb file
+        ligand (str): Path to ligand pdb file
+    """
+    with open(receptor, "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.startswith("ATOM"):
+                if line[21] not in ["A", "B", "C"]:
+                    print("Chains in the p-MHC pdb files do not match check the chains in the l file")
+                    exit(1)
+    with open(ligand, "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.startswith("ATOM"):
+                if line[21] not in ["D", "E"]:
+                    print("Chains in the TCR pdb files do not match check the chains in the r file")
+                    exit(1)
