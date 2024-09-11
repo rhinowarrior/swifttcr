@@ -19,22 +19,14 @@ import os
 from pdb2sql import align
 from pathlib import Path
 
-def initial_placement_main(receptor, ligand, outputdir, reference_receptor, reference_ligand):
+def initial_placement_main(receptor, ligand, outputdir, reference_receptor, reference_ligand, chains, variable_domain):
     receptor = Path(receptor)
     ligand = Path(ligand)
     outputdir = Path(outputdir)
     reference_receptor = Path(reference_receptor)
     reference_ligand = Path(reference_ligand)
-
-    # if len(argv) != 6:
-    #     print("Missing input files! Need receptor, ligand, outputdir, reference receptor, reference ligand")
-    #     print("Arguments found: ", argv)
-    #     sys.exit(0)
-    # else:
-    #     print("Starting rotate with args: ", argv)
-
-
-    # calcualte PCA and the rotation matrix based on two helices
+    chains = chains
+    start, end = map(int, variable_domain.split('-'))
 
     db_mhc = pdb2sql(str(receptor))
     db_tcr = pdb2sql(str(ligand))
@@ -42,10 +34,8 @@ def initial_placement_main(receptor, ligand, outputdir, reference_receptor, refe
     db_ref_tcr = pdb2sql(str(reference_ligand))
 
     updated_mhc = superpose(db_mhc, db_ref_mhc, export = False)
-    updated_tcr = superpose(db_tcr, db_ref_tcr, export = False, chainID = ['D', 'E'], resSeq = list(range(1,128)))
+    updated_tcr = superpose(db_tcr, db_ref_tcr, export = False, chainID = [chains[3], chains[4]], resSeq = list(range(start,end)))
 
 
     updated_mhc.exportpdb(Path(outputdir, receptor.name))
     updated_tcr.exportpdb(Path(outputdir, ligand.name))
-
-    #exit(0)

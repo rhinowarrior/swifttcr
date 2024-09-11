@@ -1,0 +1,19 @@
+3w0w:
+
+color red, chain E and resi 95-100 or chain D and resi 92-98
+color red, chain E and resi 24-31 or chain D and resi 24-33
+color red, chain E and resi 66-76 or chain D and resi 66-71
+
+{"D": {"start": [24, 66, 92], "end": [33, 71, 98]}, "E": {"start": [24, 66, 95], "end": [31, 76, 100]}, "C": {"start": [-1], "end": [1000]}}
+
+/home/nils/anaconda3/envs/run_piper_stage/bin/python /home/nils/swifttcr/scripts/swift_tcr.py -r example/input/3w0w_pmhc.pdb -l example/input/3w0w_tcr.pdb -o exam
+ple/output/ -ro example/input/filtered_cr_in_60.prm -rs example/input/restraintsDE.json -op test2 -c A B C D E -vd 1-110 -ar "{\"D\": {\"start\": [24, 66, 92], \"end\": [33, 71, 98]}, \"E\": {\"start\": [24, 66, 95], \"end\": [31, 76, 100]}, \"C\": {\"start\": [-1], \"end\": [1000]}}"
+
+
+5c0c:
+
+color red, chain E and resi 95-106 or chain D and resi 92-100
+color red, chain E and resi 24-32 or chain D and resi 25-32
+color red, chain E and resi 56-65 or chain D and resi 51-54
+
+/home/nils/anaconda3/envs/run_piper_stage/bin/python /home/nils/swifttcr/scripts/swift_tcr.py -r example/input/5c0c_pmhc.pdb -l example/input/5c0c_tcr.pdb -o example/output/ -ro example/input/filtered_cr_in_60.prm -rs example/input/restraintsDE.json -op 5c0c -c F G H D E -vd 1-116 -ar "{\"D\": {\"start\": [25, 51, 92], \"end\": [32, 54, 100]}, \"E\": {\"start\": [24, 56, 95], \"end\": [32, 65, 106]}, \"C\": {\"start\": [-1], \"end\": [1000]}}"

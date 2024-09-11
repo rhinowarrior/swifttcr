@@ -13,7 +13,9 @@ import io
 from contextlib import redirect_stdout
 from argparse import ArgumentParser
 import pipeline_handler
+import json
 
+# Add the project directory to the path so we can import the modules
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(project_dir)
 
@@ -28,23 +30,28 @@ if __name__ == "__main__":
     #Do we want to change these ever or keep them the same?
     reference_ligand = "ref/2bnr_r_u.pdb"
     reference_receptor = "ref/2bnr_l_u.pdb"
-    rotations = "example/input/filtered_cr_in_60.prm"
+    
+    #checks if the output directory exists, if not it creates it
+    if not os.path.exists(os.path.realpath(args.output)):
+        os.mkdir(os.path.realpath(args.output))
     
     #make sure the paths are absolute
     receptor_path = os.path.realpath(args.receptor)
     ligand_path = os.path.realpath(args.ligand)
     output_path = os.path.realpath(args.output) + "/"
     restraint_path = os.path.realpath(args.restraints)
-    rotations = os.path.realpath(rotations)
-    
+    rotations = os.path.realpath(args.rotations)
     piper_path = os.path.realpath("tools/piper")
-    
+    chains = args.chains
+    variable_domain = args.variabledomain
+    attractive_res = json.loads(args.attractive_res)
+
     #checks if the files exist and if the extensions are correct
     pipeline_handler.check_files(receptor_path, ligand_path, output_path, restraint_path)
     pipeline_handler.check_file_extensions(receptor_path, ligand_path, restraint_path, rotations)
     
     #checks if the chains are present in the pdb files
-    pipeline_handler.check_chains_pdb(receptor_path, ligand_path)
+    pipeline_handler.check_chains_pdb(receptor_path, ligand_path, chains)
     
     #prepares the pdb files
     receptor_pnon = prepare.prepare_main(receptor_path)
@@ -58,15 +65,14 @@ if __name__ == "__main__":
     ligand_ms = os.path.basename(ligand_pnon).replace(".pdb", ".ms")
     
     # #runs initial placement
-    initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand)
+    initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand, chains, variable_domain)
 
     # runs pdb2ms
-    pdb2ms.pdb2ms_main(output_path)
+    pdb2ms.pdb2ms_main(output_path, attractive_res)
 
     os.chdir(output_path)
 
     #runs piper
-    print(os.getcwd())
     subprocess.run([
         piper_path + "/piper_attr",
         "-k1",
@@ -81,8 +87,6 @@ if __name__ == "__main__":
     ]
     )
 
-    print(os.getcwd())
-
     # #runs postfilter
     postfilter.post_filter_main(output_path, "ft.000.00", rotations, restraint_path, receptor, ligand, str(args.outprefix))
 
@@ -92,7 +96,7 @@ if __name__ == "__main__":
     os.chdir("rotated")
 
     #runs apply_results
-    apply_results.apply_results_main(100, None, None,  args.outprefix, os.path.join(output_path, "ft.000.00"), os.path.join(output_path,rotations), os.path.join(output_path,ligand))
+    apply_results.apply_results_main(1000, None, None,  args.outprefix, os.path.join(output_path, "ft.000.00"), os.path.join(output_path,rotations), os.path.join(output_path,ligand))
 
     os.chdir("..")
 
