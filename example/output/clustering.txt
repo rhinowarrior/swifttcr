@@ -1,5 +1,0 @@
-Cluster center: merged_479.pdb with 703 neighbors.
-Cluster center: merged_366.pdb with 250 neighbors.
-Cluster center: merged_647.pdb with 24 neighbors.
-Cluster center: merged_662.pdb with 19 neighbors.
-Number of clusters found:  4

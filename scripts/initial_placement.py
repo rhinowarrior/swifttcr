@@ -42,7 +42,7 @@ def initial_placement_main(receptor, ligand, outputdir, reference_receptor, refe
     db_ref_tcr = pdb2sql(str(reference_ligand))
 
     updated_mhc = superpose(db_mhc, db_ref_mhc, export = False)
-    updated_tcr = superpose(db_tcr, db_ref_tcr, export = False, chainID = ['D', 'E'], resSeq = [i for i in range(1,128)])
+    updated_tcr = superpose(db_tcr, db_ref_tcr, export = False, chainID = ['D', 'E'], resSeq = list(range(1,128)))
 
 
     updated_mhc.exportpdb(Path(outputdir, receptor.name))

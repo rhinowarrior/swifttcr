@@ -81,7 +81,6 @@ def pdb2ms_main(outdir):
     #benchmark
     attractive_res = {'D':{'start' : [26, 55,104], 'end': [39,66,118]}, 'E': {'start' : [26, 55,104], 'end': [39,66,118]}, 'C':{'start' : [-1], 'end': [1000]}}
 
-
     #lyra
     #attractive_res = {'D':{'start' : [26, 57, 106], 'end': [40, 69, 128]}, 'E': {'start' : [25, 53, 103], 'end': [37, 64, 129]}, 'C':{'start' : [1], 'end': [8]}}
 
@@ -108,5 +107,5 @@ def pdb2ms_main(outdir):
 
 
 
-# if __name__ == "__main__":
-#     pdb2ms_main()
+if __name__ == "__main__":
+     pdb2ms_main("/home/nils/swifttcr/example/output/")
