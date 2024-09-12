@@ -208,7 +208,7 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
         list: List of tuples with RMSDs. (file_index_1, file_index_2, rmsd)
             File indices refer to the number in the files list.
         list: List of file paths to PDBs. The RMSD tuples refer to an index in this list.
-    """
+    """    
     if type not in ['ligand', 'interface']:
         raise Exception("RMSD Type not 'ligand' or 'interface'.")
 
@@ -254,7 +254,8 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
             superposition_residues = None
         else:
             superposition_residues = interface_res_1
-        gradpose.superpose(file_names, file_names[0], output=tmp_folder, residues=superposition_residues, chain=chain_1, cores=n_cores, gpu=torch.cuda.is_available())
+        # temprarly set gpu=False
+        gradpose.superpose(file_names, file_names[0], output=tmp_folder, residues=superposition_residues, chain=chain_1, cores=n_cores, gpu=False)
 
         aligned_file_names = [os.path.join(tmp_folder, os.path.basename(file_name)) for file_name in file_names]
 

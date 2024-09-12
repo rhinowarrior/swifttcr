@@ -150,14 +150,5 @@ def clustering_main(input_file, directory = None):
         #print("Members: ", members)
     print("Number of clusters found: ", len(clusters))
 
-    
-# if __name__=="__main__":
-#     clustering_main()
-
-
-
-    
-# if __name__=="__main__":
-#     main()
 
 

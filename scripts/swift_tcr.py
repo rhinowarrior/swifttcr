@@ -9,6 +9,7 @@ import apply_results
 import merge_pdbs
 import pairwise_rmsd
 import clustering
+import change_chain
 import io
 from contextlib import redirect_stdout
 from argparse import ArgumentParser
@@ -64,7 +65,9 @@ if __name__ == "__main__":
     ligand = os.path.basename(ligand_pnon)
     ligand_ms = os.path.basename(ligand_pnon).replace(".pdb", ".ms")
     
-    # #runs initial placement
+    change_chain.change_chain(ligand_pnon)
+    
+    #runs initial placement
     initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand, chains, variable_domain)
 
     # runs pdb2ms
@@ -105,10 +108,10 @@ if __name__ == "__main__":
         os.mkdir("merged")
 
     #runs merge_pdbs
-    merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged")
+    merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged", chains)
 
     #runs pairwise_rmsd
-    pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", "A", "D", 10,  6)
+    pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", chains[0], chains[3], 10,  6)
 
     #runs clusteringS
     output_file = os.path.join(output_path, 'clustering.txt')
