@@ -1,0 +1,4 @@
+ref, modelpdb, score
+A, F, 99.07
+B, G, 100.0
+C, H, 100.0

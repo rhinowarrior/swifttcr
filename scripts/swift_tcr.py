@@ -9,7 +9,7 @@ import apply_results
 import merge_pdbs
 import pairwise_rmsd
 import clustering
-import change_chain
+#import change_chain
 import io
 from contextlib import redirect_stdout
 from argparse import ArgumentParser
@@ -52,11 +52,14 @@ if __name__ == "__main__":
     pipeline_handler.check_file_extensions(receptor_path, ligand_path, restraint_path, rotations)
     
     #checks if the chains are present in the pdb files
-    pipeline_handler.check_chains_pdb(receptor_path, ligand_path, chains)
+    #pipeline_handler.check_chains_pdb(receptor_path, ligand_path, chains)
     
     #prepares the pdb files
     receptor_pnon = prepare.prepare_main(receptor_path)
     ligand_pnon = prepare.prepare_main(ligand_path)
+        
+    # Still have to make this work correctly
+    # changed_ligand, changed_receptor = change_chain.change_chain_main(reference_ligand, reference_receptor,ligand_pnon, receptor_pnon)
     
     #gets extra path names for later use
     receptor = os.path.basename(receptor_pnon)
@@ -65,17 +68,15 @@ if __name__ == "__main__":
     ligand = os.path.basename(ligand_pnon)
     ligand_ms = os.path.basename(ligand_pnon).replace(".pdb", ".ms")
     
-    change_chain.change_chain(ligand_pnon)
-    
-    #runs initial placement
-    initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand, chains, variable_domain)
+    # runs initial placement
+    initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand)
 
     # runs pdb2ms
     pdb2ms.pdb2ms_main(output_path, attractive_res)
 
     os.chdir(output_path)
 
-    #runs piper
+    # runs piper
     subprocess.run([
         piper_path + "/piper_attr",
         "-k1",
@@ -103,7 +104,7 @@ if __name__ == "__main__":
 
     os.chdir("..")
 
-    #checks if the merged directory exists, if not it creates it
+    # checks if the merged directory exists, if not it creates it
     if not os.path.exists("merged"):
         os.mkdir("merged")
 
