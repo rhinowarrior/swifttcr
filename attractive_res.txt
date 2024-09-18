@@ -15,7 +15,7 @@ color red, chain E and resi 95-106 or chain D and resi 92-100
 color red, chain E and resi 24-32 or chain D and resi 25-32
 color red, chain E and resi 56-65 or chain D and resi 51-54
 
-/home/nils/anaconda3/envs/run_piper_stage/bin/python /home/nils/swifttcr/scripts/swift_tcr.py -r example/input/5c0c_pmhc.pdb -l example/input/5c0c_tcr.pdb -o example/output/ -ro example/input/filtered_cr_in_60.prm -rs example/input/restraintsDE.json -op 5c0c -c F G H D E -vd 1-116 -ar "{\"D\": {\"start\": [25, 51, 92], \"end\": [32, 54, 100]}, \"E\": {\"start\": [24, 56, 95], \"end\": [32, 65, 106]}, \"C\": {\"start\": [-1], \"end\": [1000]}}"
+/home/nils/anaconda3/envs/swifttcr/bin/python /home/nils/swifttcr/scripts/swift_tcr.py -r example/input/5c0c/5c0c_pmhc.pdb -l example/input/5c0c/5c0c_tcr.pdb -o example/output/ -ro example/input/filtered_cr_in_60.prm -rs example/input/restraintsDE.json -op 5c0c -c F G H D E -vd 1-116 -ar "{\"D\": {\"start\": [25, 51, 92], \"end\": [32, 54, 100]}, \"E\": {\"start\": [24, 56, 95], \"end\": [32, 65, 106]}, \"C\": {\"start\": [-1], \"end\": [1000]}}"
 
 6amu:
 
@@ -25,4 +25,4 @@ color red, chain E and resi 97-105 or chain D and resi 91-97
 color red, chain E and resi 28-34 or chain D and resi 24-32
 color red, chain E and resi 47-53 or chain D and resi 49-53
 
-/home/nils/anaconda3/envs/run_piper_stage/bin/python /home/nils/swifttcr/scripts/swift_tcr.py -r example/input/6amu_pmhc.pdb -l example/input/6amu_tcr.pdb -o example/output/ -ro example/input/filtered_cr_in_60.prm -rs example/input/restraintsDE.json -op 6amu -c A B C D E -vd 1-108 -ar "{\"D\": {\"start\": [24, 49, 91], \"end\": [32, 53, 97]}, \"E\": {\"start\": [28, 47, 97], \"end\": [34, 53, 105]}, \"C\": {\"start\": [-1], \"end\": [1000]}}"
+/home/nils/anaconda3/envs/swifttcr/bin/python /home/nils/swifttcr/scripts/swift_tcr.py -r example/input/6amu/6amu_pmhc.pdb -l example/input/6amu/6amu_tcr.pdb -o example/output/ -ro example/input/filtered_cr_in_60.prm -rs example/input/restraintsDE.json -op 6amu -c A B C D E -vd 1-108 -ar "{\"D\": {\"start\": [24, 49, 91], \"end\": [32, 53, 97]}, \"E\": {\"start\": [28, 47, 97], \"end\": [34, 53, 105]}, \"C\": {\"start\": [-1], \"end\": [1000]}}"
