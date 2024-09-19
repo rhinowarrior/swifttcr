@@ -19,6 +19,7 @@ def rename(p_rec, p_lig, p_out):
 
 """
 
+
 def merge_pdbs_main(receptor, ligand, output_dir, chains):
     p = Path(ligand)
     p_rec = Path(receptor)
@@ -77,6 +78,7 @@ def merge_pdbs_main(receptor, ligand, output_dir, chains):
 
 
 
+#i'll wait to remove this not sure if it is neccesary for something else
 
 # if __name__=="__main__":
 #     merge_pdbs_main()

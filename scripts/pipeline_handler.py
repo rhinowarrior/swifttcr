@@ -1,6 +1,7 @@
 import os
 from argparse import ArgumentParser
 
+
 def get_arguments():
     """Gets the arguments from the user using the command line
 
@@ -26,6 +27,7 @@ def get_arguments():
     args = parser.parse_args()
     return args
 
+
 def check_files(receptor, ligand, output, restraints):
     """Checks if the files exist
 
@@ -48,6 +50,7 @@ def check_files(receptor, ligand, output, restraints):
         print(f"Output directory {output} does not exist")
         exit(1)
 
+
 def check_file_extensions(receptor, ligand, restraints, rotations):
     """Checks if the file extensions are correct
     
@@ -69,6 +72,7 @@ def check_file_extensions(receptor, ligand, restraints, rotations):
     if not rotations.endswith(".prm"):
         print("Rotations file must be a prm file")
         exit(1)
+
 
 def check_chains_pdb(receptor, ligand, chains):
     """Checks if the chains in the pdb files are correct

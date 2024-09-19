@@ -21,6 +21,7 @@ from typing import List, Tuple
 from sys import argv
 from pathlib import Path
 
+
 def read_irmsd_values(file_path: str) -> List[Tuple[str, str, float]]:
     """Read the irmsd values from file and returns a list of tuples.
 
@@ -56,6 +57,7 @@ def create_dict(irmsd_values, threshold = 9):
                 irmsd_dict[m2] = [(m1, value)]
     return irmsd_dict
 
+
 def cluster(irmsd_dict, nr_of_clusters = 100):
     """Greedy clustering of largest clusters based on irmsd.
 
@@ -90,6 +92,7 @@ def cluster(irmsd_dict, nr_of_clusters = 100):
             members.append(member.split("_")[1].strip(".pdb"))
         clusters.append((model, count, members))
     return clusters
+
 
 def clustering_main(input_file, directory = None):
     #Works for now but not sure what to do with the directory argument.
@@ -149,6 +152,3 @@ def clustering_main(input_file, directory = None):
         print("Cluster center: {} with {} neighbors.".format(model, neighbors))
         #print("Members: ", members)
     print("Number of clusters found: ", len(clusters))
-
-
-

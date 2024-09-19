@@ -7,6 +7,7 @@ import linecache
 
 FTRESULT_DTYPE = np.dtype([('roti', 'i4'), ('tv', ('f8', 3)), ('E', 'f8')])
 from signal import signal, SIGPIPE, SIG_DFL
+
 def read_rotations(file_or_handle):
     """Reads 3x3 rotation matrices from a file.
 
@@ -31,14 +32,12 @@ def read_rotations(file_or_handle):
     return rotations.reshape(-1, 3, 3)
 
 
-
 def read_ftresults(filepath, limit=None):
     """Reads ftresults from a file.
 
     See read_ftresults_stream for details."""
     with open(filepath, "r") as f:
         return read_ftresults_stream(f, limit)
-
 
 
 def read_ftresults_stream(f, limit=None):
@@ -57,7 +56,6 @@ def read_ftresults_stream(f, limit=None):
         usecols=(0, 1, 2, 3, 4))
 
 
-
 def get_ftresult(filepath, index):
     """Get ftresult at index from file.
 
@@ -71,7 +69,6 @@ def get_ftresult(filepath, index):
     return np.array(
         (int(ss[0]), [float(c) for c in ss[1:4]], float(ss[4])),
         dtype=FTRESULT_DTYPE)
-
 
 
 def apply_ftresult(coords, ftresult, rotations, center=None, out=None):
@@ -90,7 +87,6 @@ def apply_ftresult(coords, ftresult, rotations, center=None, out=None):
     #np.add(out, ftresult['tv'], out)
 
     return out  
-
 
 
 def apply_ftresults_atom_group(ag,
@@ -123,7 +119,6 @@ def apply_ftresults_atom_group(ag,
     out._setCoords(new_coords, overwrite=True)
 
     return out
-
 
 
 signal(SIGPIPE, SIG_DFL)

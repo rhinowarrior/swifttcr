@@ -18,7 +18,6 @@ ms file format
     55 - 60        Real(6.2)     attraction   Attraction
     61 - 66        Real(6.2)     surface      Surface accessibility
 """
-from sys import argv
 from pathlib import Path
 
 
@@ -27,6 +26,7 @@ def open_file(filename):
     lines = f.readlines()
     f.close()
     return lines
+
 
 def pdb2ms(pdb):
     ms = []
@@ -37,10 +37,10 @@ def pdb2ms(pdb):
         ms.append(ms_line)
     return ms
 
+
 def add_attraction_tcr(ms, attractive_res):
     new_ms = []
     for line in ms:
-        #print("ATOM   4163  CH2 TRP E 253      31.771  -0.145  97.650   0.0".startswith("ATOM"))
         if line.startswith("ATOM"):
             if line[21] in attractive_res.keys():
                 resID = int(line[22:26])
@@ -61,8 +61,6 @@ def add_attraction_tcr(ms, attractive_res):
         else:
             new_ms.append(line)
     return new_ms
-                    
-    
 
 
 def write_ms(ms, filename):
@@ -71,11 +69,13 @@ def write_ms(ms, filename):
         f.write(line + "\n")
     f.close()
 
+
 def isPrepared(modelname):
     if modelname.endswith("pnon"):
         return True
     else:
         return False
+
 
 def pdb2ms_main(outdir, attractive_res):
     #benchmark
@@ -103,9 +103,3 @@ def pdb2ms_main(outdir, attractive_res):
             write_ms(ms , str(Path(p, model.stem)) + ".ms")
         else:
             print("Skipped {}".format(model.stem))
-
-
-
-
-if __name__ == "__main__":
-     pdb2ms_main("/home/nils/swifttcr/example/output/")

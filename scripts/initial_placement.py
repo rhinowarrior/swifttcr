@@ -9,16 +9,8 @@ https://pdb2sql.readthedocs.io/en/latest/_modules/pdb2sql/superpose.html#superpo
 Usage: python3 pca.py <receptor> <ligand> <output_dir>
 """
 import pymol.cmd as cmd
-# from sys import argv
-# import sys
-# from sklearn.decomposition import PCA
-# import numpy as np
-# from pdb2sql import pdb2sql
-# from pdb2sql import transform
-# from pdb2sql import superpose
-# from pdb2sql import align
-import os
 from pathlib import Path
+
 
 def initial_placement_main(receptor, ligand, outputdir, reference_receptor, reference_ligand):
     receptor = Path(receptor)
@@ -89,32 +81,8 @@ def initial_placement_main(receptor, ligand, outputdir, reference_receptor, refe
     output_receptor_path = Path(outputdir, receptor.name)
     output_ligand_path = Path(outputdir, ligand.name)
 
-
     cmd.save(str(output_receptor_path), 'receptor')
     cmd.save(str(output_ligand_path), 'ligand')
+    
     # Clean up and quit PyMOL
     cmd.delete('all')
-
-
-# def initial_placement_main(receptor, ligand, outputdir, reference_receptor, reference_ligand, chains, variable_domain):
-#     receptor = Path(receptor)
-#     ligand = Path(ligand)
-#     outputdir = Path(outputdir)
-#     reference_receptor = Path(reference_receptor)
-#     reference_ligand = Path(reference_ligand)
-#     chains = chains
-#     start, end = map(int, variable_domain.split('-'))
-#     print("Receptor: ", receptor)
-#     print("Ligand: ", ligand)
-
-#     db_mhc = pdb2sql(str(receptor))
-#     db_tcr = pdb2sql(str(ligand))
-#     db_ref_mhc = pdb2sql(str(reference_receptor))
-#     db_ref_tcr = pdb2sql(str(reference_ligand))
-
-#     updated_mhc = superpose(db_mhc, db_ref_mhc, export = False)
-#     updated_tcr = superpose(db_tcr, db_ref_tcr, export = False, chainID = [chains[3], chains[4]], resSeq = list(range(start,end)))
-
-
-#     updated_mhc.exportpdb(Path(outputdir, receptor.name))
-#     updated_tcr.exportpdb(Path(outputdir, ligand.name))

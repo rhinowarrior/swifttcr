@@ -4,14 +4,14 @@ Inputs: Ft file with piper results, prm file with rotations, distance restraint 
 """
 
 import time
-from sys import argv
 import math
 import json
 from pdb2sql import pdb2sql
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-LOCAL_COORDINATE_DICTIONARY = {}#local dictionary to avoid dubplicate lookups in pdb files.
+LOCAL_COORDINATE_DICTIONARY = {}#local dictionary to avoid duplicate lookups in pdb files.
+
 def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, outfilename):
     start = time.time_ns()
     ft_file = output_dir + ft_file
@@ -29,10 +29,7 @@ def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, 
     filter_file_by_indices(ft_file, outfilename, index_to_keep)
     stop = time.time_ns()
     print("Time to run: ", stop-start)
-
-    
-
-        
+ 
 def filter_file_by_indices(input_file, output_file, indices):
     try:
         with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
@@ -43,7 +40,6 @@ def filter_file_by_indices(input_file, output_file, indices):
         print(f"File '{input_file}' not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 def parse_ft_file(ft_file):
     """ Parse ft file to get rotation index and translation (x y z)
@@ -91,14 +87,12 @@ def parse_res_file(res_file):
 
     Returns json object
     """
-
     f = open(res_file, 'r')
     json_line = f.read()
     f.close()
     restraints = json.loads(json_line)
 
     return restraints
-
 
 def get_pdb_coords(model, chains, residues):
     #optionally implement speedup with dictionary instead of repeated receptor and ligand lookup
@@ -179,8 +173,4 @@ def coord_distance(coord1, coord2):
     (x2, y2, z2) = coord2
     distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
     return distance
-
-
-# if __name__ == "__main__":
-#     main()
 

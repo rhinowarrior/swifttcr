@@ -308,24 +308,3 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     print(f"Done in {end_time - start_time:.1f}s")
     return rmsd_list, file_names
 
-
-def pairwise_rmsd_main(models_path, rmsd_file, chain_1, chain_2, rmsd_type, n_cores):
-    """Arguments: path/to/pdbs output_file.csv ChainID1 ChainID2 RMSDtype num_cpu_cores
-    RMSDtype can be ligand or interface.
-    num_cpu_cores is optional and will default to all cores.
-    Interface cutoff cannot be set like this at the moment.
-    (This whole section should be rewritten with argparse,
-    or import this script and call calc_rmsd() with the arguments.)
-    """
-    
-    # Now uses calc_rmsd() directly.
-
-    print(f"{models_path=}")
-    print(f"{rmsd_file=}")
-    print(f"chains: {chain_1}, {chain_2}")
-    print(f"{rmsd_type=}")
-    print(f"{n_cores=}")
-    calc_rmsd(models_path, rmsd_file, chain_1, chain_2, interface_cutoff=10., n_cores=n_cores, type=rmsd_type)
-
-# if __name__ == "__main__":
-#     pairwise_rmsd_main()
