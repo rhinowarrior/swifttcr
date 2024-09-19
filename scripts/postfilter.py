@@ -29,7 +29,8 @@ def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, 
     filter_file_by_indices(ft_file, outfilename, index_to_keep)
     stop = time.time_ns()
     print("Time to run: ", stop-start)
- 
+
+
 def filter_file_by_indices(input_file, output_file, indices):
     try:
         with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
@@ -40,6 +41,7 @@ def filter_file_by_indices(input_file, output_file, indices):
         print(f"File '{input_file}' not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
+
 
 def parse_ft_file(ft_file):
     """ Parse ft file to get rotation index and translation (x y z)
@@ -62,6 +64,7 @@ def parse_ft_file(ft_file):
 
     return ft_dict
 
+
 def parse_rot_file(rot_file):
     """Parse rot file to get rotation matrix.
 
@@ -82,6 +85,7 @@ def parse_rot_file(rot_file):
                 rot_dict[index] = matrix_values
     return rot_dict
 
+
 def parse_res_file(res_file):
     """Parse restraints file 
 
@@ -94,6 +98,7 @@ def parse_res_file(res_file):
 
     return restraints
 
+
 def get_pdb_coords(model, chains, residues):
     #optionally implement speedup with dictionary instead of repeated receptor and ligand lookup
     if model in LOCAL_COORDINATE_DICTIONARY:
@@ -103,6 +108,7 @@ def get_pdb_coords(model, chains, residues):
         LOCAL_COORDINATE_DICTIONARY[model] = pdb
     xyz = pdb.get('x,y,z', chainID = chains, resSeq = residues, name = ['CA'])
     return xyz
+
 
 def post_filter(ft_dict, rot_dict, restraints, receptor, ligand):
     """Apply restraints to receptor and rotated + translated ligand.
@@ -116,6 +122,7 @@ def post_filter(ft_dict, rot_dict, restraints, receptor, ligand):
         if check_restraints(restraints, rot_mat, translation, receptor, ligand):
             filtered_ft_file.append(i)#index of lines to keep.
     return filtered_ft_file
+
 
 def check_restraints(restraints, rot_mat, translation, receptor, ligand):
     
@@ -146,6 +153,7 @@ def check_restraints(restraints, rot_mat, translation, receptor, ligand):
     if total >= total_required:
         return True
 
+
 def validate(xyz1, xyz2, r1, translation, dmin, dmax):
     """Validate if restraints are satisfied
 
@@ -167,6 +175,7 @@ def validate(xyz1, xyz2, r1, translation, dmin, dmax):
         return True
     else:
         return False
+
 
 def coord_distance(coord1, coord2):
     (x1, y1, z1) = coord1

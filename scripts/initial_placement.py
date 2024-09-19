@@ -8,9 +8,10 @@ https://pdb2sql.readthedocs.io/en/latest/_modules/pdb2sql/superpose.html#superpo
 
 Usage: python3 pca.py <receptor> <ligand> <output_dir>
 """
-import pymol.cmd as cmd
+# Have to import cmd because that stops the warning from PyMOL because now i think it can overwrite the cmd module and otherwise pymol will give a warning
+import cmd
+from pymol import cmd
 from pathlib import Path
-
 
 def initial_placement_main(receptor, ligand, outputdir, reference_receptor, reference_ligand):
     receptor = Path(receptor)

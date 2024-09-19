@@ -28,8 +28,10 @@ if __name__ == "__main__":
     args = pipeline_handler.get_arguments()
     
     # Gets the reference files
-    reference_ligand = "ref/2bnr_r_u.pdb"
-    reference_receptor = "ref/2bnr_l_u.pdb"
+    reference_ligand = os.path.realpath("ref/2bnr_r_u.pdb")
+    reference_receptor = os.path.realpath("ref/2bnr_l_u.pdb")
+    rotations = os.path.realpath("rotations_and_restraints/filtered_cr_in_60.prm")
+    restraint_path =  os.path.realpath("rotations_and_restraints/restraintsDE.json")
     
     # checks if the output directory exists, if not it creates it
     if not os.path.exists(os.path.realpath(args.output)):
@@ -39,11 +41,11 @@ if __name__ == "__main__":
     receptor_path = os.path.realpath(args.receptor)
     ligand_path = os.path.realpath(args.ligand)
     output_path = os.path.realpath(args.output) + "/"
-    restraint_path = os.path.realpath(args.restraints)
-    rotations = os.path.realpath(args.rotations)
+    # restraint_path = os.path.realpath(args.restraints)
+    # rotations = os.path.realpath(args.rotations)
     piper_path = os.path.realpath("tools/piper")
     chains = args.chains
-    variable_domain = args.variabledomain
+    # variable_domain = args.variabledomain
     attractive_res = json.loads(args.attractive_res)
 
     # checks if the files exist and if the extensions are correct
