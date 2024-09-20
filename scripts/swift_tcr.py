@@ -14,12 +14,14 @@ from contextlib import redirect_stdout
 from argparse import ArgumentParser
 import pipeline_handler
 import json
+import warnings
 
 # Add the project directory to the path so we can import the modules
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(project_dir)
 
 from tools.protein_prep import prepare
+from tools.ANARCI_master.Example_scripts_and_sequences import ImmunoPDB
 
 os.environ["OMP_NUM_THREADS"] = "6"
 
@@ -47,6 +49,9 @@ if __name__ == "__main__":
     chains = args.chains
     # variable_domain = args.variabledomain
     attractive_res = json.loads(args.attractive_res)
+    
+    out_ligand = "renumbered_"+ os.path.basename(ligand_path)
+    out_ligand_path = ligand_path.replace(os.path.basename(ligand_path), out_ligand)
 
     # checks if the files exist and if the extensions are correct
     pipeline_handler.check_files(receptor_path, ligand_path, output_path, restraint_path)
@@ -55,9 +60,14 @@ if __name__ == "__main__":
     # checks if the chains are present in the pdb files don't think this is necessary anymore because we change the chains anyway
     #pipeline_handler.check_chains_pdb(receptor_path, ligand_path, chains)
     
+    # Renumbers the TCR file and ignore the warnings that bio.pdb throws
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", module='Bio.PDB')
+        ImmunoPDB.immunopdb_main(ligand_path, out_ligand_path)
+    
     #prepares the pdb files
     receptor_pnon = prepare.prepare_main(receptor_path)
-    ligand_pnon = prepare.prepare_main(ligand_path)
+    ligand_pnon = prepare.prepare_main(out_ligand_path)
         
     # gets extra path names for later use
     receptor = os.path.basename(receptor_pnon)
