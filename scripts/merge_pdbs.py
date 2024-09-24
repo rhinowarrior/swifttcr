@@ -20,7 +20,7 @@ def rename(p_rec, p_lig, p_out):
 """
 
 
-def merge_pdbs_main(receptor, ligand, output_dir, chains):
+def merge_pdbs_main(receptor, ligand, output_dir):
     p = Path(ligand)
     p_rec = Path(receptor)
     p_out = Path(output_dir)
@@ -30,7 +30,7 @@ def merge_pdbs_main(receptor, ligand, output_dir, chains):
     os.chdir(p_rec.parent)
     receptor_name = "{}".format(p_rec.stem + "_rename.pdb")
     
-    command = f"pdb_tidy {str(p_rec)} | pdb_selchain -{','.join(chains[:3])} | pdb_chain -{chains[0]} | pdb_reres -1 > {receptor_name}"
+    command = "pdb_tidy {} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1 > {}".format(str(p_rec), receptor_name)
     os.system(command)
     
     if p.is_dir():
@@ -48,8 +48,16 @@ def merge_pdbs_main(receptor, ligand, output_dir, chains):
                 
                 #add pdb_tidy before
 
-                command_shift = f"pdb_tidy {str(f)} | pdb_selchain -{chains[4]} | pdb_shiftres -1000 | pdb_chain -{chains[3]} > {output_E}"#pdb_selchain -E 1ao7_r_u_pnon.pdb | pdb_shiftres -1000 | pdb_chain -D
-                command_lig = f"pdb_tidy {str(f)} | pdb_selchain -{chains[3]} > {output_D}"
+    
+                #had to change this because some results became weird if i didn't shift the residues with 2000 inplace of 1000
+                #original command
+                # command_shift = "pdb_tidy {} | pdb_selchain -E | pdb_shiftres -1000 | pdb_chain -D > {}".format(str(f), output_E)
+                
+                #new command
+                command_shift = "pdb_tidy {} | pdb_selchain -E | pdb_shiftres -2000 | pdb_chain -D > {}".format(str(f), output_E)
+               
+                #pdb_selchain -E 1ao7_r_u_pnon.pdb | pdb_shiftres -1000 | pdb_chain -D
+                command_lig = "pdb_tidy {} | pdb_selchain -D > {}".format(str(f), output_D)
                 #command_shift = "pdb_selchain -E {} | pdb_shiftres -1000 | pdb_chain -D > {}".format(str(f), output_E)#pdb_selchain -E 1ao7_r_u_pnon.pdb | pdb_shiftres -1000 | pdb_chain -D
                 #command_lig = "pdb_selchain -D {} > {}".format(str(f), output_D)
                 #merge chain D and E

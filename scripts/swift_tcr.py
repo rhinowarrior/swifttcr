@@ -40,15 +40,15 @@ if __name__ == "__main__":
         os.mkdir(os.path.realpath(args.output))
     
     # make sure the paths are absolute and creates the variables
-    receptor_path = os.path.realpath(args.receptor)
-    ligand_path = os.path.realpath(args.ligand)
+    receptor_path = os.path.realpath(args.pmhc)
+    ligand_path = os.path.realpath(args.tcr)
     output_path = os.path.realpath(args.output) + "/"
     # restraint_path = os.path.realpath(args.restraints)
     # rotations = os.path.realpath(args.rotations)
     piper_path = os.path.realpath("tools/piper")
-    chains = args.chains
+    #chains = args.chains
     # variable_domain = args.variabledomain
-    attractive_res = json.loads(args.attractive_res)
+    # attractive_res = json.loads(args.attractive_res)
     
     out_ligand = "renumbered_"+ os.path.basename(ligand_path)
     out_ligand_path = ligand_path.replace(os.path.basename(ligand_path), out_ligand)
@@ -56,16 +56,14 @@ if __name__ == "__main__":
     # checks if the files exist and if the extensions are correct
     pipeline_handler.check_files(receptor_path, ligand_path, output_path, restraint_path)
     pipeline_handler.check_file_extensions(receptor_path, ligand_path, restraint_path, rotations)
-    
-    # checks if the chains are present in the pdb files don't think this is necessary anymore because we change the chains anyway
-    #pipeline_handler.check_chains_pdb(receptor_path, ligand_path, chains)
+    pipeline_handler.check_amount_of_chains_pdb(receptor_path, ligand_path)
     
     # Renumbers the TCR file and ignore the warnings that bio.pdb throws
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", module='Bio.PDB')
         ImmunoPDB.immunopdb_main(ligand_path, out_ligand_path)
     
-    #prepares the pdb files
+    # prepares the pdb files
     receptor_pnon = prepare.prepare_main(receptor_path)
     ligand_pnon = prepare.prepare_main(out_ligand_path)
         
@@ -80,7 +78,7 @@ if __name__ == "__main__":
     initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand)
 
     # runs pdb2ms
-    pdb2ms.pdb2ms_main(output_path, attractive_res)
+    pdb2ms.pdb2ms_main(output_path)
 
     os.chdir(output_path)
 
@@ -117,10 +115,10 @@ if __name__ == "__main__":
         os.mkdir("merged")
 
     # runs merge_pdbs
-    merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged", chains)
+    merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged")
 
     # runs pairwise_rmsd
-    pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", chains[0], chains[3], 10,  6)
+    pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", "A", "D", 10,  6)
 
     # runs clusteringS
     output_file = os.path.join(output_path, 'clustering.txt')
