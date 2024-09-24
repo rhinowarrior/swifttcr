@@ -12,17 +12,7 @@ def get_arguments():
     parser.add_argument("--pmhc", "-r", required=True, help="Path to mhc pdb file")
     parser.add_argument("--tcr", "-l", required=True, help="Path to tcr pdb file")
     parser.add_argument("--output", "-o", required=True, help="Output directory")
-    # parser.add_argument("--restraints", "-rs", required=True, help="Path to restraints file")
-    # parser.add_argument("--rotations", "-ro", required=True, help="Path to rotations file", default="example/input/filtered_cr_in_60.prm")
     parser.add_argument("--outprefix", "-op", required=True, help="Name of the output file")
-    # parser.add_argument("--chains", "-c", required=False, help="Chains to use in the pdb files, the chains should be added in the following order 1: alpha p-MHC chain, 2: beta alpha p-MHC chain, 3: Peptide chain, 4: alpha TCR chain, 5: beta TCR chain", default=["A", "B", "C", "D", "E"], nargs="*")
-    # parser.add_argument("--variabledomain", "-vd", required=True, help="Variable domain of the TCR. fill in like 1-128", type=str)
-    # parser.add_argument(
-    # '--attractive_res', '-ar',
-    # type=str,
-    # required=True,
-    # help="JSON string representing attractive regions. Example: '{\"D\": {\"start\": [26, 55, 104], \"end\": [39, 66, 118]}, \"E\": {\"start\": [26, 55, 104], \"end\": [39, 66, 118]}, \"C\": {\"start\": [-1], \"end\": [1000]}}'")
-    
     args = parser.parse_args()
     return args
 

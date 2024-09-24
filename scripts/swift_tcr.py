@@ -1,3 +1,9 @@
+"""
+Todo list:
+- change the output of prepare.py and ANARCI to the output directory and not the input directory
+- Add comments to the code
+"""
+
 import os.path
 import os
 import sys
@@ -11,9 +17,7 @@ import pairwise_rmsd
 import clustering
 import io
 from contextlib import redirect_stdout
-from argparse import ArgumentParser
 import pipeline_handler
-import json
 import warnings
 
 # Add the project directory to the path so we can import the modules
@@ -43,12 +47,7 @@ if __name__ == "__main__":
     receptor_path = os.path.realpath(args.pmhc)
     ligand_path = os.path.realpath(args.tcr)
     output_path = os.path.realpath(args.output) + "/"
-    # restraint_path = os.path.realpath(args.restraints)
-    # rotations = os.path.realpath(args.rotations)
     piper_path = os.path.realpath("tools/piper")
-    #chains = args.chains
-    # variable_domain = args.variabledomain
-    # attractive_res = json.loads(args.attractive_res)
     
     out_ligand = "renumbered_"+ os.path.basename(ligand_path)
     out_ligand_path = ligand_path.replace(os.path.basename(ligand_path), out_ligand)

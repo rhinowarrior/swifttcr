@@ -84,7 +84,6 @@ def apply_ftresult(coords, ftresult, rotations, center=None, out=None):
 
     out = np.dot(coords - center, rotations[ftresult['roti']].T)
     np.add(out, ftresult['tv'] + center, out)
-    #np.add(out, ftresult['tv'], out)
 
     return out  
 

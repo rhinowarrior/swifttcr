@@ -25,7 +25,6 @@ def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, 
     rot_dict = parse_rot_file(rot_file)
     restraints = parse_res_file(res_file)
     index_to_keep = post_filter(ft_dict, rot_dict, restraints, receptor, ligand)
-    #print("Total lines to keep: ", len(index_to_keep))
     filter_file_by_indices(ft_file, outfilename, index_to_keep)
     stop = time.time_ns()
     print("Time to run: ", stop-start)
@@ -140,8 +139,6 @@ def check_restraints(restraints, rot_mat, translation, receptor, ligand):
             lig_resid = group_r['lig_resid']
             dmax = group_r['dmax']
             dmin = group_r['dmin']
-            #print("Receptor: ", rec_chain, rec_resid)
-            #print("Ligand: ", lig_chain, lig_resid)
             coords_receptor = get_pdb_coords(receptor, [rec_chain], [rec_resid])
             coords_ligand = get_pdb_coords(ligand, [lig_chain], [lig_resid])
             res_bool = validate(coords_receptor, coords_ligand, rot_mat, translation, dmin, dmax)
@@ -149,7 +146,6 @@ def check_restraints(restraints, rot_mat, translation, receptor, ligand):
                 valid +=1
         if valid >= required_group:
               total += 1
-    #print("Satisfied: ", total >= total_required)
     if total >= total_required:
         return True
 

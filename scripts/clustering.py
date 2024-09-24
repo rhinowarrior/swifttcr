@@ -99,7 +99,6 @@ def clustering_main(input_file, directory = None):
     if directory == None:
         irmsd_values = read_irmsd_values(input_file)
     elif directory != None:
-        #irmsd_values = read_irmsd_values(argv[1])
         pipeline_dir = argv[1]
         p = Path(pipeline_dir)
         for f in p.iterdir():
@@ -127,7 +126,6 @@ def clustering_main(input_file, directory = None):
                             fh.write(outline + "\n")
                             fm.write(member_final + "\n")
                             
-                            #print("Members: ", members)
                     else:
                         clusters = []
                     finalline = "Number of clusters found: {}".format( len(clusters))
@@ -138,7 +136,6 @@ def clustering_main(input_file, directory = None):
                 except FileNotFoundError:
                     print("File not found")
     else:
-        #irmsd_values = read_irmsd_values('/home/jaarts/pipeline/3sjv_60/irmsd.csv')
         exit(0)
     irmsd_dict = create_dict(irmsd_values)
     clusters = cluster(irmsd_dict)
@@ -150,5 +147,4 @@ def clustering_main(input_file, directory = None):
             count_dict[key] = neighbors
     for model, neighbors, members in clusters:
         print("Cluster center: {} with {} neighbors.".format(model, neighbors))
-        #print("Members: ", members)
     print("Number of clusters found: ", len(clusters))

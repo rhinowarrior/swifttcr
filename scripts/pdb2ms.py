@@ -78,18 +78,10 @@ def isPrepared(modelname):
 
 
 def pdb2ms_main(outdir):
-    #benchmark can now use this because renumbering to IMGT
+    
+    #can now use this because renumbering to IMGT numbering is done
     attractive_res = {'D':{'start' : [26, 55,104], 'end': [39,66,118]}, 'E': {'start' : [26, 55,104], 'end': [39,66,118]}, 'C':{'start' : [-1], 'end': [1000]}}
-
-    #lyra
-    #attractive_res = {'D':{'start' : [26, 57, 106], 'end': [40, 69, 128]}, 'E': {'start' : [25, 53, 103], 'end': [37, 64, 129]}, 'C':{'start' : [1], 'end': [8]}}
-
-    #tcr_model2
-    #attractive_res = {'D':{'start' : [26, 57, 106], 'end': [41, 69, 139]}, 'E': {'start' : [26, 57, 106], 'end': [41, 69, 139]}, 'C':{'start' : [1], 'end': [8]}}
-
-    #capri
-    #attractive_res = {'D':{'start' : [27, 50, 92], 'end': [35, 60, 103]}, 'E': {'start' : [27, 49, 92], 'end': [33, 56, 108]}, 'C':{'start' : [-1], 'end': [1000]}}
-    #attractive_res = {'D':{'start' : [27, 59, 107], 'end': [40, 72, 139]}, 'E': {'start' : [27, 59, 107], 'end': [40, 68, 139]}, 'C':{'start' : [-1], 'end': [1000]}}
+    
     p = Path(outdir)
     for model in p.iterdir():
         case_id = model.name[:3]

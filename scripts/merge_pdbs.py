@@ -41,34 +41,26 @@ def merge_pdbs_main(receptor, ligand, output_dir):
             if f.suffix ==".pdb":
                 print(f.name)
                 ligand_name = "{}".format(f.stem + "_rename.pdb")
-                #command_lig =  "pdb_selchain -D,E {} | pdb_chain -D | pdb_reres -1 > {}".format(str(f), ligand_name)
-                #select chain E and shiftres
                 output_E = "{}".format(f.stem + "_Eshift.pdb")
                 output_D = "{}".format(f.stem + "_Dshift.pdb")
                 
-                #add pdb_tidy before
 
     
                 #had to change this because some results became weird if i didn't shift the residues with 2000 inplace of 1000
+                
                 #original command
                 # command_shift = "pdb_tidy {} | pdb_selchain -E | pdb_shiftres -1000 | pdb_chain -D > {}".format(str(f), output_E)
                 
                 #new command
                 command_shift = "pdb_tidy {} | pdb_selchain -E | pdb_shiftres -2000 | pdb_chain -D > {}".format(str(f), output_E)
                
-                #pdb_selchain -E 1ao7_r_u_pnon.pdb | pdb_shiftres -1000 | pdb_chain -D
                 command_lig = "pdb_tidy {} | pdb_selchain -D > {}".format(str(f), output_D)
-                #command_shift = "pdb_selchain -E {} | pdb_shiftres -1000 | pdb_chain -D > {}".format(str(f), output_E)#pdb_selchain -E 1ao7_r_u_pnon.pdb | pdb_shiftres -1000 | pdb_chain -D
-                #command_lig = "pdb_selchain -D {} > {}".format(str(f), output_D)
+    
                 #merge chain D and E
                 command_DE = "pdb_merge {} {} | pdb_sort > {}".format(output_D, output_E, ligand_name)
-                #command_lig =  "pdb_sort -C {} | pdb_selchain -D,E | pdb_chain -D | pdb_reres -1 > {}".format(str(f), ligand_name)#use pdb_shift res to add 1000 to
                 
                 merged_name = "merged_" + str(f).split(".")[1] + ".pdb"
                 merge_command = "pdb_merge {} {} | pdb_tidy -strict > {}".format(receptor_name, ligand_name, str(Path(p_out, merged_name)))
-                #print(os.getcwd())
-                #print("Command renaming ligand: ", command_lig)
-                #print("Command merge: ", merge_command)
 
                 os.system(command_shift)
 
@@ -83,26 +75,3 @@ def merge_pdbs_main(receptor, ligand, output_dir):
 
     else:
         pass
-
-
-
-#i'll wait to remove this not sure if it is neccesary for something else
-
-# if __name__=="__main__":
-#     merge_pdbs_main()
-
-
-
-#pdb_selchain.py -AB your.pdb | pdb_chain.py -A | pdb_reres.py -1 > new.pdb
-#python pdb_merge.py <pdb file> <pdb file>
-#python pdb_tidy.py -strict 1CTF.pdb
-
-#np.subtract(orig_coords, center, orig_coords)
-#out = ag.copy()
-#out._setCoords(orig_coords, overwrite=True)
-#writePDB("test_move.pdb", out)
-
-
-#rename chains receptor
-
-#print(command)

@@ -71,14 +71,9 @@ def _calc_selection_rmsd(template_index, xyz_all, del_mask):
 
     pdb_range = torch.arange(start=1, end=len(xyz_all_current))
     del_mask_current = del_mask_current[:1] * del_mask_current[1:]
-    # torch.save(xyz_all_current, "/home/kevinvg/superpose/xyz_all_current.pt")
-    # torch.save(del_mask_current, "/home/kevinvg/superpose/del_mask_current.pt")
 
     rmsds = ((xyz_all_current[0] - xyz_all_current[pdb_range]) * del_mask_current).pow(2).reshape(len(xyz_all_current)-1, -1).sum(1).div(del_mask_current.sum(1).squeeze()).sqrt()
     for i in range(1, len(xyz_all_current)):
-        # cur_rmsd = rmsds[i-1].item()
-        # sql_rmsd = pdb2sql.StructureSimilarity.get_rmsd(xyz_all_current[0].numpy(), xyz_all_current[i].numpy())
-        # print(f"COMPARE\t{cur_rmsd}\t{sql_rmsd}")
         rmsd_list.append((template_index, i + template_index, rmsds[i-1].item()))
     return rmsd_list
 
@@ -136,7 +131,6 @@ def load_stack_xyzr_all(file_names, chain, n_cores):
             total=len(file_names),
             desc="Loading atoms"
         ))
-    #xyzr_list = [load_ligand_ca_xyzr(file, chain) for file in file_names]
 
     low = 1e10
     high = 0
@@ -268,17 +262,6 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
         
         if type == "interface":
             xyzr_all, del_mask = load_stack_xyz_all(aligned_file_names, chain_2, interface_res_2, n_cores)
-            # interface_res_1 = list(zip(repeat(chain_1), interface_res_1))
-            # interface_res_2 = list(zip(repeat(chain_2), interface_res_2))
-
-            # chain_res_pairs = interface_res_1 + interface_res_2
-            # xyzr_all, del_mask = load_union_xyz(aligned_file_names, chain_res_pairs)
-
-
-    # print("After loading data", flush=True)
-    # print(xyzr_all.shape, flush=True)
-    # print(del_mask.shape, flush=True)
-    # print("===")
 
     # Calc pairwise RMSDs of the current selection of atoms.
     with mp.get_context("spawn").Pool(n_cores) as pool:
@@ -300,7 +283,6 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     if rmsd_path:
         with open(rmsd_path, "w", encoding="utf-8") as rmsd_file:
             for rmsd in tqdm(rmsd_list, desc="Saving RMSDs to file"):
-                # rmsd_file.write(",".join([str(num) for num in rmsd]) + "\n")
                 rmsd_file.write(",".join([os.path.basename(file_names[rmsd[0]]), os.path.basename(file_names[rmsd[1]]), str(rmsd[2])]) + "\n")
 
     # Finished
