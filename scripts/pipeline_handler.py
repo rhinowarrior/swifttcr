@@ -1,3 +1,9 @@
+"""
+Name: pipeline_handler.py
+Function: This script is used to handle the arguments from the user. It checks if the files exist, if the file extensions are correct and if the amount of chains in the pdb files are as expected. The output is the arguments from the user.
+Date: 25-09-2024
+Author: Nils Smit
+"""
 import os
 from argparse import ArgumentParser
 
@@ -17,14 +23,12 @@ def get_arguments():
     return args
 
 
-def check_files(receptor, ligand, output, restraints):
+def check_files(receptor, ligand):
     """Checks if the files exist
 
     Args:
         receptor (str): Path to receptor pdb file
         ligand (str): Path to ligand pdb file
-        output (str): Output directory
-        restraints (str): Path to restraints file
     """
     if not os.path.exists(receptor):
         print(f"Receptor file {receptor} does not exist")
@@ -32,22 +36,14 @@ def check_files(receptor, ligand, output, restraints):
     if not os.path.exists(ligand):
         print(f"Ligand file {ligand} does not exist")
         exit(1)
-    if not os.path.exists(restraints):
-        print(f"Restraints file {restraints} does not exist")
-        exit(1)
-    if not os.path.exists(output):
-        print(f"Output directory {output} does not exist")
-        exit(1)
 
 
-def check_file_extensions(receptor, ligand, restraints, rotations):
+def check_file_extensions(receptor, ligand):
     """Checks if the file extensions are correct
     
     Args: 
         receptor (str): Path to receptor pdb file
         ligand (str): Path to ligand pdb file
-        restraints (str): Path to restraints file
-        rotations (str): Path to rotations file
     """
     if not receptor.endswith(".pdb"):
         print("Receptor file must be a pdb file")
@@ -55,13 +51,6 @@ def check_file_extensions(receptor, ligand, restraints, rotations):
     if not ligand.endswith(".pdb"):
         print("Ligand file must be a pdb file")
         exit(1)
-    if not restraints.endswith(".json"):
-        print("Restraints file must be a json file")
-        exit(1)
-    if not rotations.endswith(".prm"):
-        print("Rotations file must be a prm file")
-        exit(1)
-
 
 def check_amount_of_chains_pdb(receptor, ligand):
     """Checks if the amount of chains are as excepected in the pdb files
@@ -71,6 +60,7 @@ def check_amount_of_chains_pdb(receptor, ligand):
         ligand (str): Path to ligand pdb file
     """
     with open(receptor, "r") as f:
+        # count the amount of unique chains in the receptor file
         count_chains = set()
         for line in f:
             if line.startswith("ATOM"):
@@ -79,6 +69,7 @@ def check_amount_of_chains_pdb(receptor, ligand):
             print("peptide-MHC file must have 3 chains")
             exit(1)
     with open(ligand, "r") as f:
+        # count the amount of unique chains in the ligand file
         count_chains = set()
         for line in f:
             if line.startswith("ATOM"):

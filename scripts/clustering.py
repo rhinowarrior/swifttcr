@@ -25,8 +25,11 @@ from pathlib import Path
 def read_irmsd_values(file_path: str) -> List[Tuple[str, str, float]]:
     """Read the irmsd values from file and returns a list of tuples.
 
-    Input: file_path(str), path to the pairwise irmsd values csv file.
-    Returns irmsd_values(lst), list of tuples with (m1, m2, irmsd).
+    Args:
+        file_path: path to the pairwise irmsd values csv file.
+        
+    Returns:
+        irmsd_values: list of tuples with (m1, m2, irmsd).
     """
     irmsd_values = []
     with open(file_path, 'r') as f:
@@ -38,10 +41,14 @@ def read_irmsd_values(file_path: str) -> List[Tuple[str, str, float]]:
 
 def create_dict(irmsd_values, threshold = 9):
     """Create dictionary with key: model_name, and value [(model2, irmsd)].
-
     Threshold sets the maximum irmsd values included in the dictionary. (Default 9A as done in Cluspro)
-    Input: irmsd_values(lst), List of tuples (m1, m2, irmsd).
-    Returns: irmsd_dict (key:model_name), value:[(m2, irmsd)]
+    
+    Args:
+        irmsd_values: List of tuples (m1, m2, irmsd).
+        threshold: Maximum irmsd value to include in the dictionary. (Default 9)
+
+    Returns:
+        irmsd_dict: Dictionary with key: model_name, and value [(model2, irmsd)].
     """
 
     irmsd_dict = {}
@@ -60,14 +67,17 @@ def create_dict(irmsd_values, threshold = 9):
 
 def cluster(irmsd_dict, nr_of_clusters = 100):
     """Greedy clustering of largest clusters based on irmsd.
-
     Keeps track of visited models with set(). Iterates over all keys and selects the largest cluster. 
     Then removes (hides with set()) those models from the dataset.
-    Input: irmsd_dict
-    nr_of_clusters(int), number of clusters to output. (Default 30)
-    Returns: clusters(lst), [model_name, nr_of_neighbors]
+    
+    Args:
+        irmsd_dict: Dictionary with key: model_name, and value [(model2, irmsd)].
+        nr_of_clusters: Number of clusters to output. (Default 100)
+        
+    Returns:
+        clusters: List of tuples with (model_name, nr_of_neighbors, [members])
     """
-
+    
     visited = set()
     clusters = []
     while len(clusters)< nr_of_clusters:#nr of clusters
@@ -95,9 +105,18 @@ def cluster(irmsd_dict, nr_of_clusters = 100):
 
 
 def clustering_main(input_file, directory = None):
-    #Works for now but not sure what to do with the directory argument.
+    """Main function for clustering based on irmsd values.
+    
+    Args:
+        input_file: Path to the pairwise irmsd values csv file.
+        directory: Path to the directory with the irmsd values. (Default None)
+    
+    Returns:
+        clusters: List of tuples with (model_name, nr_of_neighbors, [members])
+    """
     if directory == None:
         irmsd_values = read_irmsd_values(input_file)
+    # If directory is given, iterate over all files in the directory. but is never given maybe remove this.
     elif directory != None:
         pipeline_dir = argv[1]
         p = Path(pipeline_dir)
@@ -137,6 +156,7 @@ def clustering_main(input_file, directory = None):
                     print("File not found")
     else:
         exit(0)
+    # If no directory is given, return the clusters.
     irmsd_dict = create_dict(irmsd_values)
     clusters = cluster(irmsd_dict)
     count_dict ={}

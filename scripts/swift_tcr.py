@@ -1,7 +1,16 @@
 """
+Name: swift_tcr.py
+Function: This script is the main pipeline for the swift_tcr project. It takes a TCR and a p-MHC structure as input and runs a series of programs to predict the orientation of the TCR on the PMHC. And then it calculates the pairwise RMSD between the predicted structures and clusters them based on the RMSD values. The output is a text file with the cluster information and a directory with all the predicted structures of the TCR-p-MHC. 
+Date: 25-09-2024
+Author: Nils Smit
+"""
+
+"""
 Todo list:
-- change the output of prepare.py and ANARCI to the output directory and not the input directory
+- change the output of prepare.py and ANARCI to the output directory and not the input directory (could use shutil.move for prepare because not sure i can change the output directory) [Fixed]
 - Add comments to the code
+- Change pdb2ms.py to only use the results of initial_placement.py and not all the pdb files in the directory [fixed]
+- If possible run piper in parallel, because it is the most time consuming step at the moment.
 """
 
 import os.path
@@ -19,6 +28,9 @@ import io
 from contextlib import redirect_stdout
 import pipeline_handler
 import warnings
+import shutil
+import multiprocessing
+import time
 
 # Add the project directory to the path so we can import the modules
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -30,6 +42,7 @@ from tools.ANARCI_master.Example_scripts_and_sequences import ImmunoPDB
 os.environ["OMP_NUM_THREADS"] = "6"
 
 if __name__ == "__main__":
+    time_start = time.time()
     # Get the arguments from the user
     args = pipeline_handler.get_arguments()
     
@@ -49,12 +62,13 @@ if __name__ == "__main__":
     output_path = os.path.realpath(args.output) + "/"
     piper_path = os.path.realpath("tools/piper")
     
+    # renumbers the TCR file
     out_ligand = "renumbered_"+ os.path.basename(ligand_path)
-    out_ligand_path = ligand_path.replace(os.path.basename(ligand_path), out_ligand)
+    out_ligand_path = os.path.join(output_path, out_ligand)
 
     # checks if the files exist and if the extensions are correct
-    pipeline_handler.check_files(receptor_path, ligand_path, output_path, restraint_path)
-    pipeline_handler.check_file_extensions(receptor_path, ligand_path, restraint_path, rotations)
+    pipeline_handler.check_files(receptor_path, ligand_path)
+    pipeline_handler.check_file_extensions(receptor_path, ligand_path)
     pipeline_handler.check_amount_of_chains_pdb(receptor_path, ligand_path)
     
     # Renumbers the TCR file and ignore the warnings that bio.pdb throws
@@ -62,8 +76,10 @@ if __name__ == "__main__":
         warnings.filterwarnings("ignore", module='Bio.PDB')
         ImmunoPDB.immunopdb_main(ligand_path, out_ligand_path)
     
-    # prepares the pdb files
+    # prepares the pdb files and moves them to the output directory
     receptor_pnon = prepare.prepare_main(receptor_path)
+    shutil.move(receptor_pnon, os.path.join(output_path, os.path.basename(receptor_pnon)))
+    receptor_pnon = os.path.join(output_path, os.path.basename(receptor_pnon))
     ligand_pnon = prepare.prepare_main(out_ligand_path)
         
     # gets extra path names for later use
@@ -76,8 +92,12 @@ if __name__ == "__main__":
     # runs initial placement
     initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand)
 
+    # gets the paths for the ms files
+    output_receptor_path = os.path.join(output_path, receptor)
+    output_ligand_path = os.path.join(output_path, ligand)
+    
     # runs pdb2ms
-    pdb2ms.pdb2ms_main(output_path)
+    pdb2ms.pdb2ms_main(output_receptor_path, output_ligand_path)
 
     os.chdir(output_path)
 
@@ -133,3 +153,5 @@ if __name__ == "__main__":
         file.write(captured_output)
 
     print(f"Output written to {output_file}")
+    time_end = time.time()
+    print(f"Time taken: {time_end - time_start} seconds")

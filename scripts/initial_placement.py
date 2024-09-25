@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # Li Xue
 # 16-Mar-2023 17:22
-#REWRITE using 2 reference structures and do superposition take 2bnr_l_u, 2bnr_r_u from input_new/
-"""Script to rotate the ligand and receptor based on alpha helices and conserved cys residues.
-
-https://pdb2sql.readthedocs.io/en/latest/_modules/pdb2sql/superpose.html#superpose
-
-Usage: python3 pca.py <receptor> <ligand> <output_dir>
+"""
+Name: initial_placement.py
+Function: This script is used to superimpose the target TCR and p-MHC to the reference TCR and p-MHC. The script uses PyMOL to superimpose the structures and then finds the closest residue to the reference residues in the target structures. The script then changes the chain of the closest residues to the chain of the reference residues. The output is the superimposed structures with the chains renamed to the reference chains.
+date: 25-09-2024
+Author: Nils Smit, Li Xue
 """
 
 """
@@ -25,6 +24,12 @@ import numpy as np
 def get_residue_coordinates(selection):
     """
     get the coordinates of the alpha carbon of the residue and chain in the selection
+    
+    Args:
+        selection (str): The selection of the residue and chain
+    
+    Returns:
+        coordinates (list): The coordinates of the alpha carbon of the residue and chain
     """
     # Get the coordinates of the atoms in the selection
     model = cmd.get_model(selection)
@@ -37,8 +42,14 @@ def get_residue_coordinates(selection):
 
 
 def find_superposed_chain(ref_residue_coords, target_residues):
-    """
-    Find the closest residue to the reference residue in the target
+    """ Find the closest residue to the reference residue in the target
+    
+    Args:
+        ref_residue_coords (np.array): The coordinates of the reference residue
+        target_residues (list): The list of atoms in the target structure
+    
+    Returns:
+        closest_residue (Atom): The closest residue to the reference residue
     """
     closest_residue = None
     min_distance = float('inf')
@@ -55,6 +66,15 @@ def find_superposed_chain(ref_residue_coords, target_residues):
 
 
 def initial_placement_main(receptor, ligand, outputdir, reference_receptor, reference_ligand):
+    """ Superimposes the target stuctures to reference structures and renames the chains to the reference chains.
+
+    Args:
+        receptor (str): The path to the target p-MHC structure
+        ligand (str): The path to the target TCR structure
+        outputdir (str): The path to the output directory
+        reference_receptor (str): The path to the reference p-MHC structure
+        reference_ligand (str): The path to the reference TCR structure
+    """
     receptor = Path(receptor)
     ligand = Path(ligand)
     outputdir = Path(outputdir)
@@ -84,7 +104,7 @@ def initial_placement_main(receptor, ligand, outputdir, reference_receptor, refe
     target_residues_tcr = cmd.get_model("ligand").atom
     target_residues_pmhc = cmd.get_model("receptor").atom
 
-    # Find the closest residue to the  of the reference residues
+    # Find the closest residue of the target to the reference residues
     closest_residue_a = find_superposed_chain(ref_residue_coords_a, target_residues_pmhc)
     closest_residue_b = find_superposed_chain(ref_residue_coords_b, target_residues_pmhc)
     closest_residue_c = find_superposed_chain(ref_residue_coords_c, target_residues_pmhc)
@@ -102,6 +122,7 @@ def initial_placement_main(receptor, ligand, outputdir, reference_receptor, refe
     cmd.alter(f'receptor and chain {closest_residue_b.chain}', 'chain="Y"')
     cmd.alter(f'receptor and chain {closest_residue_c.chain}', 'chain="Z"')
     
+    # change the chain of the closest residues to the chain of the reference using the temporary chain ID
     cmd.alter(f'receptor and chain X', 'chain="A"')
     cmd.alter(f'receptor and chain Y', 'chain="B"')
     cmd.alter(f'receptor and chain Z', 'chain="C"')
@@ -110,21 +131,24 @@ def initial_placement_main(receptor, ligand, outputdir, reference_receptor, refe
     cmd.alter(f'ligand and chain {closest_residue_d.chain}', 'chain="Y"')
     cmd.alter(f'ligand and chain {closest_residue_e.chain}', 'chain="Z"')
 
-    # change the chain of the closest residues to the chain of the reference
-    # residues
+    # change the chain of the closest residues to the chain of the reference using the temporary chain ID
     cmd.alter(f'ligand and chain Y', 'chain="D"')
     cmd.alter(f'ligand and chain Z', 'chain="E"')
     
     output_receptor_path = Path(outputdir, receptor.name)
     output_ligand_path = Path(outputdir, ligand.name)
     
-    print(f"RMSD of ligand superposition: {rmsd_lig:.2f} Å")
-    print(f"RMSD of receptor superposition: {rmsd_rec:.2f} Å")
+    # print the RMSD of the superposition
+    print(f"RMSD of ligand superposition: {rmsd_lig:.2f}")
+    print(f"RMSD of receptor superposition: {rmsd_rec:.2f}")
+    
+    # If the RMSD is larger than 2.0 print a warning
     if rmsd_lig > 2.0:
         print(f"Warning: RMSD of ligand superposition is {rmsd_lig:.2f}")
     if rmsd_rec > 2.0:
         print(f"Warning: RMSD of receptor superposition is {rmsd_rec:.2f}")
 
+    # Save the superimposed structures
     cmd.save(str(output_receptor_path), 'receptor')
     cmd.save(str(output_ligand_path), 'ligand')
 

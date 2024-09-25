@@ -77,21 +77,26 @@ def isPrepared(modelname):
         return False
 
 
-def pdb2ms_main(outdir):
-    
+def pdb2ms_main(file_1, file_2):
     #can now use this because renumbering to IMGT numbering is done
     attractive_res = {'D':{'start' : [26, 55,104], 'end': [39,66,118]}, 'E': {'start' : [26, 55,104], 'end': [39,66,118]}, 'C':{'start' : [-1], 'end': [1000]}}
     
-    p = Path(outdir)
-    for model in p.iterdir():
-        case_id = model.name[:3]
-        model_type = model.name[4:6]
-        prepared = True#isPrepared(model.stem)
-        if model.suffix == ".pdb":
-            pdb = open_file(model)
-            ms = pdb2ms(pdb)
-            ms = add_attraction_tcr(ms, attractive_res)
-            print("Wrote to: ", str(Path(p, model.stem)) + ".ms")
-            write_ms(ms , str(Path(p, model.stem)) + ".ms")
+    # make a list of files to process
+    file_list = [file_1, file_2]
+    
+    # loop over the files
+    for file in file_list:
+        p = Path(file)
+        case_id = p.name[:3]
+        model_type = p.name[4:6]
+        prepared = True # Assuming isPrepared() logic is handled elsewhere or this can be implemented later
+        
+        if p.suffix == ".pdb":
+            pdb = open_file(p)  # Assuming open_file is a pre-defined function
+            ms = pdb2ms(pdb)    # Assuming pdb2ms is a pre-defined function
+            ms = add_attraction_tcr(ms, attractive_res)  # Assuming add_attraction_tcr is a pre-defined function
+            output_file = str(Path(p.parent, p.stem)) + ".ms"
+            print(f"Wrote to: {output_file}")
+            write_ms(ms, output_file)  # Assuming write_ms is a pre-defined function
         else:
-            print("Skipped {}".format(model.stem))
+            print(f"Skipped {p.stem}")
