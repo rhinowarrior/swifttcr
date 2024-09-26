@@ -10,7 +10,7 @@ Todo list:
 - change the output of prepare.py and ANARCI to the output directory and not the input directory (could use shutil.move for prepare because not sure i can change the output directory) [Fixed]
 - Add comments to the code
 - Change pdb2ms.py to only use the results of initial_placement.py and not all the pdb files in the directory [fixed]
-- If possible run piper in parallel, because it is the most time consuming step at the moment.
+- run piper using multiple cores (Found out piper already does this) [Fixed]
 """
 
 import os.path
@@ -29,8 +29,7 @@ from contextlib import redirect_stdout
 import pipeline_handler
 import warnings
 import shutil
-import multiprocessing
-import time
+
 
 # Add the project directory to the path so we can import the modules
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -39,10 +38,9 @@ sys.path.append(project_dir)
 from tools.protein_prep import prepare
 from tools.ANARCI_master.Example_scripts_and_sequences import ImmunoPDB
 
-os.environ["OMP_NUM_THREADS"] = "6"
+os.environ["OMP_NUM_THREADS"] = "12"
 
 if __name__ == "__main__":
-    time_start = time.time()
     # Get the arguments from the user
     args = pipeline_handler.get_arguments()
     
@@ -137,7 +135,7 @@ if __name__ == "__main__":
     merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged")
 
     # runs pairwise_rmsd
-    pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", "A", "D", 10,  6)
+    pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", "A", "D", 10,  12)
 
     # runs clusteringS
     output_file = os.path.join(output_path, 'clustering.txt')
@@ -153,5 +151,3 @@ if __name__ == "__main__":
         file.write(captured_output)
 
     print(f"Output written to {output_file}")
-    time_end = time.time()
-    print(f"Time taken: {time_end - time_start} seconds")
