@@ -27,8 +27,19 @@ def merge_pdbs_main(receptor, ligand, output_dir):
     os.chdir(p_rec.parent)
     receptor_name = "{}".format(p_rec.stem + "_rename.pdb")
     
-    #rename receptor
-    command = "pdb_tidy {} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1 > {}".format(str(p_rec), receptor_name)
+    # This command makes it so the peptide chain is seperated from chain A in the receptor because the peptide chain with the current code made part of the mhc and it tries to connect to it in pymol.
+    # This command doesn't work because in pairwise_rmsd.py it tries to pad the chains which crashes the programm so this will work once we replace gradpose with our own code.
+    # command = (
+    # "pdb_tidy {} | "  # Clean the PDB
+    # "pdb_selchain -A,B | pdb_chain -A | pdb_reres -1000 > mhc.pdb; "  # Select chains A and B, rename to A, renumber residues starting from 1000, and save as mhc.pdb
+    # "pdb_tidy {} | "  # Clean the PDB again
+    # "pdb_selchain -C | pdb_chain -A | pdb_reres -1 > pep.pdb; "  # Select chain C, rename to A, renumber starting from 1, and save as pep.pdb
+    # "pdb_merge pep.pdb mhc.pdb | pdb_tidy > {}; "  # Properly concatenate mhc.pdb and pep.pdb into pMHC.pdb, appending to the output
+    # "rm mhc.pdb pep.pdb"  # Remove intermediate files mhc.pdb and pep.pdb
+    # ).format(str(p_rec), str(p_rec), receptor_name)
+    
+    command = "pdb_tidy {} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1  > {}".format(str(p_rec), receptor_name)
+    
     os.system(command)
     
     if p.is_dir():

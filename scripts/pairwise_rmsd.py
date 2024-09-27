@@ -339,7 +339,16 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     if type not in ['ligand', 'interface']:
         raise Exception("RMSD Type not 'ligand' or 'interface'.")
 
+    # set the number of threads to 1 to avoid issues where the amount of cores is higher than specified
+    os.environ["OMP_NUM_THREADS"] = str(n_cores)
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
+    torch.set_num_threads(1)
+
     print("RMSD TYPE:", type)
+
+    # ensure the context is spawn and avoids tne issue of using more cores than allocated
+    ctx = mp.get_context("spawn")
 
     # Read all PDB file names from the names file.
     file_names = glob.glob(os.path.join(models_path, "*.pdb"))
@@ -350,10 +359,10 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     if type == 'interface':
         chain1_xyzr, chain1_del_mask, *_ = load_stack_xyzr_all(file_names, chain_1, n_cores)
     chain2_xyzr, chain2_del_mask, chain2_first, chain2_last = load_stack_xyzr_all(file_names, chain_2, n_cores)
-
+    
     if type == 'interface':
         # Determine the interface residues.
-        with mp.Pool(n_cores) as pool:
+        with ctx.Pool(n_cores) as pool:
             result = list(tqdm(
                 pool.imap(
                     func=_get_interface_residues,
@@ -382,7 +391,7 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
         else:
             superposition_residues = interface_res_1
         # runs gradpose.superpose
-        gradpose.superpose(file_names, file_names[0], output=tmp_folder, residues=superposition_residues, chain=chain_1, cores=n_cores, gpu=torch.cuda.is_available())
+        gradpose.superpose(file_names, file_names[0], output=tmp_folder, residues=superposition_residues, chain=chain_1, cores=n_cores, gpu=False)
 
         aligned_file_names = [os.path.join(tmp_folder, os.path.basename(file_name)) for file_name in file_names]
 

@@ -104,7 +104,7 @@ def cluster(irmsd_dict, nr_of_clusters = 100):
     return clusters
 
 
-def clustering_main(input_file, directory = None):
+def clustering_main(input_file, treshold = 9,directory = None):
     """Main function for clustering based on irmsd values.
     
     Args:
@@ -157,7 +157,7 @@ def clustering_main(input_file, directory = None):
     else:
         exit(0)
     # If no directory is given, return the clusters.
-    irmsd_dict = create_dict(irmsd_values)
+    irmsd_dict = create_dict(irmsd_values, treshold)
     clusters = cluster(irmsd_dict)
     count_dict ={}
     for key in irmsd_dict.keys():

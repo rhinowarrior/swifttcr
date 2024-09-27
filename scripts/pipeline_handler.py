@@ -19,6 +19,8 @@ def get_arguments():
     parser.add_argument("--tcr", "-l", required=True, help="Path to tcr pdb file")
     parser.add_argument("--output", "-o", required=True, help="Output directory")
     parser.add_argument("--outprefix", "-op", required=True, help="Name of the output file")
+    parser.add_argument("--cores", "-c", required=True, type=int ,help="Amount of cores to use")
+    parser.add_argument("--threshold", "-t", required=False, type=int, help="Threshold for clustering default is 9")
     args = parser.parse_args()
     return args
 

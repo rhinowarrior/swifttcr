@@ -6,4 +6,4 @@
 #$ -V
 #$ -pe smp 12
 
-python3 scripts/swift_tcr.py -r /home/nils/swifttcr/example/input/6amu/6amu_pmhc.pdb -l /home/nils/swifttcr/example/input/6amu/6amu_tcr.pdb -o example/output/  -op bash_test
+python3 scripts/swift_tcr.py -r example/input/5c0c/5c0c_pmhc.pdb -l example/input/5c0c/5c0c_tcr.pdb -o example/output/  -op 5c0c -c 12 -t 9
