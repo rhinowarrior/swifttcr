@@ -20,8 +20,9 @@ Todo list:
 - remove the pdb file prints to stop clogging the output from the pipeline in merge_pdbs.py
 - Discuss with the team if we should remove the directory part of the clustering.py script because it is never used.
 - Check if postfilter.py is still needed.
+- Think there is a lot of optimization possible in initial_placement.py
 - Add a way in the Readme to install the tools that are used in the pipeline.
-- Put all os.system commands in subprocess.run commands. Or run pdb_tools as a 
+- Put all os.system commands in subprocess.run commands.
 """
 
 import os.path
@@ -40,7 +41,6 @@ from contextlib import redirect_stdout
 import pipeline_handler
 import warnings
 import shutil
-import time
 
 
 # Add the project directory to the path so we can import the modules
@@ -107,14 +107,9 @@ if __name__ == "__main__":
 
     ligand = os.path.basename(ligand_pnon)
     ligand_ms = os.path.basename(ligand_pnon).replace(".pdb", ".ms")
-    
-    time_start = time.time()
-    
+        
     # runs initial placement
     initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand)
-
-    time_end = time.time()
-    print(f"Time to run initial placement: {time_end - time_start}")
 
     print("Finished with initial placement")
 
