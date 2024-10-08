@@ -17,12 +17,14 @@ Todo list:
 - In clustering.py also give the user the posibility to input threshold in function create_dict() Default is 9. [Fixed]
 - Create a specific output directory for the results of the pipeline using the output-prefix argument and combining it with the output directory [fixed]
 - Fixed a bug in the initial_placement.py script where the chain IDs were not changed correctly because they first change C to D and then D to E where all chains end up as E [Fixed]
-- remove the pdb file prints to stop clogging the output from the pipeline in merge_pdbs.py
+- remove the pdb file prints to stop clogging the output from the pipeline in merge_pdbs.py [Fixed]
 - Discuss with the team if we should remove the directory part of the clustering.py script because it is never used.
 - Check if postfilter.py is still needed.
 - Think there is a lot of optimization possible in initial_placement.py
 - Add a way in the Readme to install the tools that are used in the pipeline.
-- Put all os.system commands in subprocess.run commands.
+- Put all os.system commands in subprocess.run commands. [fixed]
+- multiprocess the merge_pdbs.py script
+- put the master branch of pdb-tools in the tools directory so that we don't have to call commandline command for merging and the initial placement.
 """
 
 import os.path
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     args = pipeline_handler.get_arguments()
     
     # Gets the reference files
-    reference_ligand = os.path.realpath("ref/2bnr_r_u.pdb")
+    reference_ligand = os.path.realpath("ref/2bnr_r_u.pdb") 
     reference_receptor = os.path.realpath("ref/2bnr_l_u.pdb")
     rotations = os.path.realpath("rotations_and_restraints/filtered_cr_in_60.prm")
     restraint_path =  os.path.realpath("rotations_and_restraints/restraintsDE.json")

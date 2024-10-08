@@ -15,7 +15,7 @@ python scripts/swift_tcr.py -r /your/input/peptide-mhc -l /your/input/tcr -o out
 
 **Example command:**
 ```
-python scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc.pdb -l example/input/benchmark_dataset/3w0w/3w0w_tcr.pdb -o example/output/ -op first_test -c 6 -t 9
+python scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_renumbered.pdb -l example/input/benchmark_dataset/3w0w/3w0w_tcr.pdb -o example/output/ -op first_test -c 6 -t 9
 ```
 
 ## Dependencies:

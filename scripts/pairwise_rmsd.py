@@ -358,7 +358,9 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     # Load all residues from both chains.
     if type == 'interface':
         chain1_xyzr, chain1_del_mask, *_ = load_stack_xyzr_all(file_names, chain_1, n_cores)
+        torch.cuda.empty_cache()
     chain2_xyzr, chain2_del_mask, chain2_first, chain2_last = load_stack_xyzr_all(file_names, chain_2, n_cores)
+    torch.cuda.empty_cache()
     
     if type == 'interface':
         # Determine the interface residues.
@@ -380,6 +382,7 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
         interface_res_sets_1, interface_res_sets_2 = zip(*result)
         interface_res_1 = sorted(list(set().union(*interface_res_sets_1)))
         interface_res_2 = sorted(list(set().union(*interface_res_sets_2)))
+        torch.cuda.empty_cache()
     
         print(f"{interface_res_1=}")
         print(f"{interface_res_2=}")
@@ -392,6 +395,7 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
             superposition_residues = interface_res_1
         # runs gradpose.superpose
         gradpose.superpose(file_names, file_names[0], output=tmp_folder, residues=superposition_residues, chain=chain_1, cores=n_cores, gpu=False)
+        torch.cuda.empty_cache()
 
         aligned_file_names = [os.path.join(tmp_folder, os.path.basename(file_name)) for file_name in file_names]
 
@@ -416,6 +420,7 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
             total=len(file_names) - 1,
             desc="Calculating RMSDs"
         ))
+    torch.cuda.empty_cache()
 
     # Reverse the order of the list.
     print("Processing RMSDs...")
@@ -431,4 +436,3 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     end_time = time.perf_counter()
     print(f"Done in {end_time - start_time:.1f}s")
     return rmsd_list, file_names
-

@@ -3,154 +3,77 @@
 # 16-Mar-2023 17:22
 """
 Name: initial_placement.py
-Function: This script is used to superimpose the target TCR and p-MHC to the reference TCR and p-MHC. The script uses PyMOL to superimpose the structures and gets the alignment from pymol. The script then changes the chainID of the target to the chainID of the reference. The output is the superimposed structures with the chains renamed to that of the reference chains.
+Function: This script is used to superimpose the target TCR and p-MHC to the reference TCR and p-MHC. The script uses PyMOL to superimpose the structures and then finds the closest residue to the reference residues in the target structures. The script then changes the chain of the closest residues to the chain of the reference residues. The output is the superimposed structures with the chains renamed to the reference chains.
 date: 25-09-2024
 Author: Nils Smit, Li Xue
 """
 
 """
-In the future it is beter to also renumber p-MHC so that this procces can become even faster. 
+In the future it is beter to renumber the pMHC to IMGT numbering so that we can look at only a specific residue in both the reference and target. This will make it faster to find which chain is superimposed to which chain in the reference.
+
+Todo: rewrite script summary
 """
 
 # Have to import cmd because that stops the warning from PyMOL because now i think it can overwrite the cmd module and otherwise pymol will give a warning
-import subprocess
-import os
 import cmd
 from pymol import cmd as pymol_cmd
 from pathlib import Path
 
-
+ 
 def superpose_and_change_chain_IDs(reference, target, output):
-    """
-    Superpose the target structure to the reference structure, save it to a temp file, and change the chain IDs using PDB Tools based on the alignment.
-
-    Args:
-        reference (str): Path to the reference PDB file.
-        target (str): Path to the target PDB file.
-        output (str): Path to save the final superposed and chain-modified target PDB file.
+    """ Superpose the target structure to the reference structure and change the chain IDs based on the alignment.
     
-    Raises:
-        RuntimeError: If any subprocess or PyMOL operation fails.
+    Args:
+        reference (str): path to the reference PDB file
+        target (str): path to the target PDB file
+        output (str): path to save the superposed target PDB file
     """
     # Initialize PyMOL and clear the workspace
     pymol_cmd.reinitialize()
-
+    
     # Load the reference and target PDB files
     pymol_cmd.load(reference, "ref")
     pymol_cmd.load(target, "target")
-
-    # Superpose target onto reference using CA atoms
+    
+    # Use super instead of align
     pymol_cmd.super("target and name CA", "ref and name CA", object="alignment")
 
-    # Get the raw alignment from PyMOL
+    # Get the raw alignment
     alignment = pymol_cmd.get_raw_alignment("alignment")
-
+    
     if alignment:
-        # Save the superposed target structure to a temporary file
-        temp_superposed = f"temp_superposed.pdb"
-        pymol_cmd.save(temp_superposed, "target")
-
-        # Fetch atoms from both reference and target
-        ref_atoms = pymol_cmd.get_model("ref").atom
+        ref_atoms = pymol_cmd.get_model("ref").atom 
         target_atoms = pymol_cmd.get_model("target").atom
-
+        
         chain_mapping = {}
-
-        # Build chain mapping based on the alignment
+        
         for ref_idx, target_idx in alignment:
-            ref_atom = ref_atoms[ref_idx[1] - 1]
+            ref_atom = ref_atoms[ref_idx[1] - 1]  # ref_idx is a tuple (object index, atom index)
             target_atom = target_atoms[target_idx[1] - 1]
 
             ref_chain = ref_atom.chain
             target_chain = target_atom.chain
 
-            # Map target chain to reference chain
+            # Create a chain mapping based on the alignment
             if target_chain not in chain_mapping:
                 chain_mapping[target_chain] = ref_chain
                 print(f"Mapping target chain {target_chain} to reference chain {ref_chain}")
-
-        # Modify chains using PDB Tools on the superposed structure
-        temp_files = []
-
-        try:
-            # Apply PDB Tools to each target chain and create temp files
-            for target_chain, ref_chain in chain_mapping.items():
-                temp_pdb_file = run_pdb_tools(temp_superposed, target_chain, ref_chain)
-                temp_files.append(temp_pdb_file)
-
-            # Merge the chain-modified temporary files using pdb_merge
-            merge_pdb_files(temp_files, output)
-
-            print(f"Final structure with chain renaming saved as: {output}")
-
-        except RuntimeError as e:
-            print(f"Error occurred: {e}")
-        finally:
-            # Clean up temp files
-            if os.path.exists(temp_superposed):
-                os.remove(temp_superposed)
-            for temp_file in temp_files:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-
+        
+        # Separate chains into different objects, rename, and then merge
+        for target_chain, ref_chain in chain_mapping.items():
+            # Select the target chain and create a new object
+            pymol_cmd.create(f"target_chain_{target_chain}", f"target and chain {target_chain}")
+            pymol_cmd.alter(f"target_chain_{target_chain}", f"chain='{ref_chain}'")
+        
+        # Combine the renamed chains back into a single object
+        pymol_cmd.create("renamed_target", "target_chain_*")  # Use wildcard to combine all separate chains
+        
+        # Save the newly created object
+        pymol_cmd.save(output, "renamed_target")
+        pymol_cmd.remove("all")
+    
     else:
         print("No alignment was produced. Please check your input files.")
-
-
-def run_pdb_tools(input_pdb, chain_target, ref_chain):
-    """
-    Use PDB Tools to tidy, select chain, and rename chain/segment based on reference chain
-    in a single pipeline.
-
-    Args:
-        input_pdb (str): The input PDB file path.
-        chain_target (str): The chain from the target PDB file that we want to modify.
-        ref_chain (str): The reference chain ID that we want to apply to the target PDB file.
-
-    Returns:
-        str: The path to the temporary modified PDB file.
-    
-    Raises:
-        RuntimeError: If the PDB Tools command fails.
-    """
-    temp_output = f"temp_{chain_target}.pdb"
-
-    # Combined pipeline with pdb_tidy, pdb_selchain, pdb_chain, pdb_seg
-    pdb_command = (
-        f"pdb_tidy {input_pdb} | "
-        f"pdb_selchain -{chain_target} | "
-        f"pdb_chain -{ref_chain} | "
-        f"pdb_seg -{ref_chain} | "
-        f"grep '^ATOM' > {temp_output}"
-    )
-
-    try:
-        subprocess.run(pdb_command, shell=True, check=True)
-    
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Error occurred while running PDB Tools for chain {chain_target}: {e}")
-
-    return temp_output
-
-
-def merge_pdb_files(temp_files, output):
-    """
-    Merge the temporary PDB files using pdb_merge and save the final output.
-
-    Args:
-        temp_files (list): List of temporary PDB files to merge.
-        output (str): Output file path for the final merged PDB file.
-    
-    Raises:
-        RuntimeError: If the pdb_merge command fails.
-    """
-    temp_files_str = ' '.join(temp_files)
-    merge_command = f"pdb_merge {temp_files_str} > {output}"
-
-    try:
-        subprocess.run(merge_command, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Error occurred while merging PDB files: {e}")
 
 
 def initial_placement_main(receptor, ligand, outputdir, reference_receptor, reference_ligand):
