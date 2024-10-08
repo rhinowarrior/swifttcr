@@ -20,7 +20,6 @@ Todo list:
 - remove the pdb file prints to stop clogging the output from the pipeline in merge_pdbs.py [Fixed]
 - Discuss with the team if we should remove the directory part of the clustering.py script because it is never used.
 - Check if postfilter.py is still needed.
-- Think there is a lot of optimization possible in initial_placement.py
 - Add a way in the Readme to install the tools that are used in the pipeline.
 - Put all os.system commands in subprocess.run commands. [fixed]
 - multiprocess the merge_pdbs.py script

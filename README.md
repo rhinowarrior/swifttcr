@@ -19,6 +19,7 @@ python scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_re
 ```
 
 ## Dependencies:
+* Python 3.9.12
 * [Pymol open source: 3.0.0](https://github.com/schrodinger/pymol-open-source)
 * [anarci: 2021.02.04](https://github.com/oxpig/ANARCI) 
 * [gradpose: 0.1](https://github.com/X-lab-3D/GradPose)

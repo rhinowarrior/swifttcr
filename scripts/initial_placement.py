@@ -10,6 +10,7 @@ Author: Nils Smit, Li Xue
 
 """
 In the future it is beter to renumber the pMHC to IMGT numbering so that we can look at only a specific residue in both the reference and target. This will make it faster to find which chain is superimposed to which chain in the reference.
+Make it so that the peptide is selected based on if it is shorter than 30 aminoacids.
 
 Todo: rewrite script summary
 """
@@ -46,7 +47,32 @@ def superpose_and_change_chain_IDs(reference, target, output):
         target_atoms = pymol_cmd.get_model("target").atom
         
         chain_mapping = {}
+        target_peptide_chain = None
+        ref_peptide_chain = None
         
+        # Identify peptide chain in the reference structure
+        ref_chains = pymol_cmd.get_chains("ref")
+        
+        for chain in ref_chains:
+            chain_residues = pymol_cmd.get_model(f"ref and chain {chain}").atom
+            unique_residues = set([residue.resi for residue in chain_residues])
+            
+            if len(unique_residues) < 30:
+                ref_peptide_chain = chain
+                break  # Assuming only one peptide chain in reference
+        
+        # Identify peptide chain in the target structure
+        target_chains = pymol_cmd.get_chains("target")
+        
+        for chain in target_chains:
+            chain_residues = pymol_cmd.get_model(f"target and chain {chain}").atom
+            unique_residues = set([residue.resi for residue in chain_residues])
+            
+            if len(unique_residues) < 30:
+                target_peptide_chain = chain
+                break  # Assuming only one peptide chain in target
+        
+        # Align and map chains
         for ref_idx, target_idx in alignment:
             ref_atom = ref_atoms[ref_idx[1] - 1]  # ref_idx is a tuple (object index, atom index)
             target_atom = target_atoms[target_idx[1] - 1]
@@ -65,11 +91,19 @@ def superpose_and_change_chain_IDs(reference, target, output):
             pymol_cmd.create(f"target_chain_{target_chain}", f"target and chain {target_chain}")
             pymol_cmd.alter(f"target_chain_{target_chain}", f"chain='{ref_chain}'")
         
+        # If a peptide chain was identified, rename the target peptide chain to match the reference peptide chain
+        if target_peptide_chain and ref_peptide_chain:
+            print(f"Mapping target chain {target_peptide_chain} to reference chain {ref_peptide_chain}")
+            pymol_cmd.create(f"target_chain_{target_peptide_chain}", f"target and chain {target_peptide_chain}")
+            pymol_cmd.alter(f"target_chain_{target_peptide_chain}", f"chain='{ref_peptide_chain}'")
+        
         # Combine the renamed chains back into a single object
         pymol_cmd.create("renamed_target", "target_chain_*")  # Use wildcard to combine all separate chains
         
         # Save the newly created object
         pymol_cmd.save(output, "renamed_target")
+        
+        # Clean up
         pymol_cmd.remove("all")
     
     else:
@@ -98,5 +132,9 @@ def initial_placement_main(receptor, ligand, outputdir, reference_receptor, refe
     # Superpose the target p-MHC to the reference p-MHC
     superpose_and_change_chain_IDs(reference_receptor, receptor, output_receptor_path)
     
+    print("Finished superposing the p-MHC")
+    
     # Superpose the target TCR to the reference TCR
     superpose_and_change_chain_IDs(reference_ligand, ligand, output_ligand_path)
+    
+    print("Finished superposing the TCR")
