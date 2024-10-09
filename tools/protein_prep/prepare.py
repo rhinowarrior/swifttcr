@@ -167,7 +167,7 @@ def pdbpqr(base_dir, pdb, chains):
 
     filter_missing_backbone(genout, genout)
     with open('error_log', 'a') as err_out, open('output_log', 'a') as out_f:
-        subprocess.call([base_dir+'/pdb2pqr-1.9.0/pdb2pqr.py', '--nodebump', '--noopt', '--mol_charmm_pdb', '--chain', '--ff=LIBMOL', '--ffout=LIBMOL', genout, pqr], stdout=out_f, stderr=err_out)
+        subprocess.call(['python2', base_dir+'/pdb2pqr-1.9.0/pdb2pqr.py', '--nodebump', '--noopt', '--mol_charmm_pdb', '--chain', '--ff=LIBMOL', '--ffout=LIBMOL', genout, pqr], stdout=out_f, stderr=err_out)
     cd1_to_cd(outmol, outmol2)
     libmol_norm(outmol2, nonminout)
 
