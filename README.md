@@ -15,6 +15,15 @@ To get started with SwiftTCR, follow these steps:
 1. **Clone or Download** this repository.
 2. Navigate into the SwiftTCR folder.
 
+### Installation
+
+To quickly install all the necessary packages, you can use the provided `swifttcr_install.yml` file. Run the following commands:
+
+```
+conda env create -f swifttcr_install.yml
+conda activate swifttcr 
+```
+
 ### Running SwiftTCR
 Use the following command to execute SwiftTCR:
 

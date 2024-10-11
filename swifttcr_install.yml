@@ -1,0 +1,18 @@
+name: swifttcr
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9.12 
+  - pymol-open-source=3.0.0  # Installed via conda
+  - prody=2.4.1  # Installed via conda
+  - pytorch=2.4.1  # Installed via conda
+  - biopython=1.79 # Installed via conda
+  - anarci=2021.02.04 # Installed via conda
+  - pip 
+  - pip:
+      - gradpose==0.1
+      - pdb-tools==2.5.0
+      - pdb2sql==0.5.3
+
