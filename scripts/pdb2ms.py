@@ -22,6 +22,14 @@ from pathlib import Path
 
 
 def open_file(filename):
+    """Open a file and read the lines into a list.
+
+    Args:
+        filename (str): The path to the file to open.
+        
+    Returns:
+        list: A list of lines from the file.
+    """
     f = open(filename)
     lines = f.readlines()
     f.close()
@@ -29,6 +37,14 @@ def open_file(filename):
 
 
 def pdb2ms(pdb):
+    """Convert a pdb file to an ms file.
+    
+    Args:
+        pdb (list): A list of lines from a pdb file.
+    
+    Returns:
+        list: A list of lines for the ms file.
+    """
     ms = []
     for line in pdb:
         ms_line = line[:54]
@@ -39,6 +55,15 @@ def pdb2ms(pdb):
 
 
 def add_attraction_tcr(ms, attractive_res):
+    """Add attraction to the residues in the attractive_res dictionary.
+    
+    Args:
+        ms (list): A list of lines from an ms file.
+        attractive_res (dict): A dictionary of attractive residues.
+    
+    Returns:
+        list: A list of lines for the ms file with attractions added.
+    """
     new_ms = []
     for line in ms:
         if line.startswith("ATOM"):
@@ -64,6 +89,12 @@ def add_attraction_tcr(ms, attractive_res):
 
 
 def write_ms(ms, filename):
+    """Write the ms lines to a file.
+    
+    Args:
+        ms (list): A list of lines for the ms file.
+        filename (str): The path to the file to write.
+    """
     f = open(filename, "w")
     for line in ms:
         f.write(line + "\n")
@@ -71,6 +102,14 @@ def write_ms(ms, filename):
 
 
 def isPrepared(modelname):
+    """Checks if the model is prepared.
+    
+    Args:
+        modelname (str): The name of the model.
+        
+    Returns:
+        bool: True if the model is prepared, False otherwise.
+    """
     if modelname.endswith("pnon"):
         return True
     else:
@@ -78,6 +117,12 @@ def isPrepared(modelname):
 
 
 def pdb2ms_main(file_1, file_2):
+    """main function to convert pdb files to ms files with selected attractive residues.
+    
+    Args:
+        file_1 (str): path to the first pdb file
+        file_2 (str): path to the second pdb file
+    """
     #can now use this because renumbering to IMGT numbering is done
     attractive_res = {'D':{'start' : [26, 55,104], 'end': [39,66,118]}, 'E': {'start' : [26, 55,104], 'end': [39,66,118]}, 'C':{'start' : [-1], 'end': [1000]}}
     
@@ -89,7 +134,7 @@ def pdb2ms_main(file_1, file_2):
         p = Path(file)
         case_id = p.name[:3]
         model_type = p.name[4:6]
-        prepared = True # Assuming isPrepared() logic is handled elsewhere or this can be implemented later
+        prepared = isPrepared(p.stem)
         
         if p.suffix == ".pdb":
             pdb = open_file(p)  # Assuming open_file is a pre-defined function

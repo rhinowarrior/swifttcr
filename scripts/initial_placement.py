@@ -47,6 +47,7 @@ def superpose_and_change_chain_IDs(reference, target, output):
         target_atoms = pymol_cmd.get_model("target").atom
         
         chain_mapping = {}
+        processed_chains = set()  # Keep track of processed chains
         target_peptide_chain = None
         ref_peptide_chain = None
         
@@ -80,10 +81,11 @@ def superpose_and_change_chain_IDs(reference, target, output):
             ref_chain = ref_atom.chain
             target_chain = target_atom.chain
 
-            # Create a chain mapping based on the alignment
-            if target_chain not in chain_mapping:
+            # Create a chain mapping based on the alignment if not already processed
+            if target_chain not in chain_mapping and target_chain not in processed_chains:
                 chain_mapping[target_chain] = ref_chain
                 print(f"Mapping target chain {target_chain} to reference chain {ref_chain}")
+                processed_chains.add(target_chain)  # Mark the chain as processed
         
         # Separate chains into different objects, rename, and then merge
         for target_chain, ref_chain in chain_mapping.items():
@@ -92,10 +94,11 @@ def superpose_and_change_chain_IDs(reference, target, output):
             pymol_cmd.alter(f"target_chain_{target_chain}", f"chain='{ref_chain}'")
         
         # If a peptide chain was identified, rename the target peptide chain to match the reference peptide chain
-        if target_peptide_chain and ref_peptide_chain:
+        if target_peptide_chain and ref_peptide_chain and target_peptide_chain not in processed_chains:
             print(f"Mapping target chain {target_peptide_chain} to reference chain {ref_peptide_chain}")
             pymol_cmd.create(f"target_chain_{target_peptide_chain}", f"target and chain {target_peptide_chain}")
             pymol_cmd.alter(f"target_chain_{target_peptide_chain}", f"chain='{ref_peptide_chain}'")
+            processed_chains.add(target_peptide_chain)  # Mark the peptide chain as processed
         
         # Combine the renamed chains back into a single object
         pymol_cmd.create("renamed_target", "target_chain_*")  # Use wildcard to combine all separate chains

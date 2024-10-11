@@ -37,6 +37,7 @@ import apply_results
 import merge_pdbs
 import pairwise_rmsd
 import clustering
+import flip_alternative
 import io
 from contextlib import redirect_stdout
 import pipeline_handler
@@ -87,7 +88,6 @@ if __name__ == "__main__":
     # checks if the files exist and if the extensions are correct
     pipeline_handler.check_files(receptor_path, ligand_path)
     pipeline_handler.check_file_extensions(receptor_path, ligand_path)
-    #pipeline_handler.check_amount_of_chains_pdb(receptor_path, ligand_path)
     
     # Renumbers the TCR file and ignore the warnings that bio.pdb throws
     with warnings.catch_warnings():
@@ -99,6 +99,9 @@ if __name__ == "__main__":
     shutil.move(receptor_pnon, os.path.join(output_path, os.path.basename(receptor_pnon)))
     receptor_pnon = os.path.join(output_path, os.path.basename(receptor_pnon))
     ligand_pnon = prepare.prepare_main(out_ligand_path)
+    
+    flip_alternative.reorder_residues_in_structure(receptor_pnon, receptor_pnon)    
+    flip_alternative.reorder_residues_in_structure(ligand_pnon, ligand_pnon)
     
     print("Finished with preparing the files")
         
@@ -112,7 +115,7 @@ if __name__ == "__main__":
     # runs initial placement
     initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand)
 
-    print("Finished with initial placement")
+    print("Finished with aligning the target structures to the reference structures and changing the chainIDs")
 
     # gets the paths for the ms files
     output_receptor_path = os.path.join(output_path, receptor)
@@ -121,7 +124,7 @@ if __name__ == "__main__":
     # runs pdb2ms
     pdb2ms.pdb2ms_main(output_receptor_path, output_ligand_path)
     
-    print("Finished with pdb2ms")
+    print("Finished with adding attractions and creating the ms files")
 
     os.chdir(output_path)
 
@@ -140,12 +143,12 @@ if __name__ == "__main__":
     ]
     )
     
-    print("Finished with piper")
+    print("Finished with running piper")
 
     # runs postfilter
     postfilter.post_filter_main(output_path, "ft.000.00", rotations, restraint_path, receptor, ligand, str(args.outprefix))
     
-    print("Finished with postfiltering")
+    print("Finished with filtering pipeline results")
 
     # checks if the rotated directory exists, if not it creates it
     if not os.path.exists("rotated"):
@@ -166,7 +169,7 @@ if __name__ == "__main__":
     # runs merge_pdbs
     merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged")
     
-    print("Finished with merging the files")
+    print("Finished with merging the pMHC and rotated TCR files")
 
     # runs pairwise_rmsd
     pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", "A", "D", 10,  n_cores=cores)
@@ -186,4 +189,5 @@ if __name__ == "__main__":
     with open(output_file, 'w') as file:
         file.write(captured_output)
 
+    print("Finished with clustering the structures")
     print(f"Output written to {output_file}")

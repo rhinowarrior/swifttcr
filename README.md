@@ -37,8 +37,9 @@ python3 scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_r
 * [ProDy: 2.4.1](https://github.com/prody/ProDy)
 * [torch: 2.4.1](https://pytorch.org/)
 * [pdb2sql: 0.5.3](https://github.com/DeepRank/pdb2sql)
+* [Biopython: 1.79](https://biopython.org/)
 
-## Output Structure Naming Convention
+## Output Structure Naming Convention initial placement
 
 ### Peptide-MHC Chains
 - **A** = MHC (Not IMGT numbered)
@@ -48,6 +49,12 @@ python3 scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_r
 ### TCR Chains
 - **D** = TCR Alpha Chain (IMGT numbered)
 - **E** = TCR Beta Chain (IMGT numbered)
+
+## Output Structure Naming Convetion SwiftTCR
+
+### TCR-Peptide-MHC
+- **A** = The ABC Chains of original Peptide-MHC combined
+- **D** = The Alpha and Beta chains of TCR combined
 
 ---
 
