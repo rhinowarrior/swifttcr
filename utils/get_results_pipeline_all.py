@@ -32,14 +32,14 @@ def main():
     reference_dir = argv[3]#path to directory with reference models, name should match case id
     cluster_input = argv[4]#name of cluster file example: "clustering_8.txt"
     model_dict = create_model_clus_dict(pipeline_dir, cluster_input)
-    print(model_dict)
+    #print(model_dict)
     p = Path(outfile)
     f = open(str(add_suffix(p, "lrmsd_")), 'w')
     g = open(str(add_suffix(p, "irmsd_")), 'w')
     h = open(str(add_suffix(p, "fnat_")), 'w')
     # turn off when not making whole plot
     t = open(str(add_suffix(p, "combined_")), 'w')
-    
+
     for key, value in model_dict.items():
         reference = str(Path(reference_dir, key + "_merged.pdb"))
         print(reference)
@@ -98,10 +98,10 @@ def create_model_clus_dict(p_dir, cluster_input = "clustering.txt"):
     model_dict = {}
     p = Path(p_dir)
     for model_dir in p.iterdir():
-        key = model_dir.name[:4]#-3
+        key = model_dir.name[:4]  # Take the first 4 characters as key
         merged_path = Path(model_dir, "merged")
         for model in merged_path.iterdir(): 
-            if model.is_file():
+            if model.is_file() and model.suffix == '.pdb' and model.stat().st_size > 0:  # Check for valid PDB files
                 if key not in model_dict:
                     model_dict[key] = []
                 model_dict[key].append(model.name)
@@ -112,47 +112,40 @@ def calc_LRMSD_decoys(ref_file, decoys):
     """
     Calculates the LRMSD between a reference PDB structure and a set of decoy PDB structures.
     Args:
-        in_DIR: str, input directory containing the PDB structures.
-        target_id: str, ID of the target to calculate LRMSD for.
-        ref_name: str, name of the reference PDB structure (default='ref.pdb').
-        reg_expr: str, regular expression to match the decoy PDB structures (default='*.pdb').
+        ref_file: str, path to the reference PDB structure.
+        decoys: list, list of paths to the decoy PDB structures.
     Returns:
-        None.
+        lrmsds, irmsds, fnats: lists of calculated scores.
     """
     final_scores = {}
 
-    pdb_ref = PDBParser().get_structure('pdb1', ref_file)    
+    pdb_ref = PDBParser().get_structure('pdb1', ref_file)
 
-
-    # iterating over all files
-    #print(decoy_files)
     lrmsds = []
     irmsds = []
     fnats = []
+    
+    # Check if decoys list is empty
+    if not decoys:
+        print("Warning: No decoy sequences found.")
+        return [], [], []  # Return empty lists if no decoys are found
+
     for decoy_file in decoys:
         pdb_decoy = PDBParser().get_structure('pdb2', decoy_file)
 
-        
-        # # remove c-like domain and keep only g domain
-        # pdb_decoy = remove_C_like_domain(pdb_decoy)
-        # pdb_ref = remove_C_like_domain(pdb_ref)
-
-
-        pdb_ref , pdb_decoy= map_PDBs(pdb_ref,pdb_decoy)
+        pdb_ref, pdb_decoy = map_PDBs(pdb_ref, pdb_decoy)
 
         pdb_ref = reres(pdb_ref)
         pdb_decoy = reres(pdb_decoy)
 
-        write_PDB(pdb_ref, ref_file[:-4]+'_mapped.pdb')
-        write_PDB(pdb_decoy, decoy_file[:-4]+'_mapped.pdb')
+        write_PDB(pdb_ref, ref_file[:-4] + '_mapped.pdb')
+        write_PDB(pdb_decoy, decoy_file[:-4] + '_mapped.pdb')
         lrmsd_pdb2sql = 1000
         irmsd_pdb2sql = 1000
         fnat_pdb2sql = 1000
-        # print(f"Reference file: {ref_file[:-4]+'_mapped.pdb'}")
-        # print(f"Decoy file: {decoy_file[:-4]+'_mapped.pdb'}")
         
         try:
-            sim = StructureSimilarity(ref_file[:-4]+'_mapped.pdb',decoy_file[:-4]+'_mapped.pdb', enforce_residue_matching=False)
+            sim = StructureSimilarity(ref_file[:-4] + '_mapped.pdb', decoy_file[:-4] + '_mapped.pdb', enforce_residue_matching=False)
 
             lrmsd_pdb2sql = sim.compute_lrmsd_fast(lzone='ref.lzone')
             irmsd_pdb2sql = sim.compute_irmsd_fast()
@@ -164,10 +157,11 @@ def calc_LRMSD_decoys(ref_file, decoys):
             print(f"Error in {os.path.basename(decoy_file)}: {str(e)}")
             
         try:
-            os.remove(decoy_file[:-4]+'_mapped.pdb')
-            os.remove(ref_file[:-4]+'_mapped.pdb')
+            os.remove(decoy_file[:-4] + '_mapped.pdb')
+            os.remove(ref_file[:-4] + '_mapped.pdb')
         except:
-            print('error deleting mapped files')
+            print('Error deleting mapped files')
+        
         lrmsds.append(lrmsd_pdb2sql)
         irmsds.append(irmsd_pdb2sql)
         fnats.append(fnat_pdb2sql)
@@ -297,48 +291,91 @@ def assign(pdb, pdb_sequences ,  residues_to_remove=[]):
 
 
 def map_PDBs(pdb_ref,pdb_decoy,remove_non_mapped=True,custom_map={}):
-    
-    ref_sequences = [[chain.id, seq1(''.join([res.resname for res in chain]), custom_map=custom_map)] for chain in pdb_ref.get_chains()]
+    """
+    Maps a decoy PDB structure to a reference structure based on matching residues.
 
+    Args:
+        pdb_ref: Bio.PDB structure of the reference.
+        pdb_decoy: Bio.PDB structure of the decoy to be mapped.
+        remove_non_mapped (bool): If True, non-mapped residues will be removed from both structures.
+        custom_map (dict): A custom mapping for residue names, if necessary.
+
+    Returns:
+        tuple: The mapped reference and decoy PDB structures.
+    """
+    # Extract sequences from reference and decoy PDB structures
+    ref_sequences = [
+        [chain.id, seq1(''.join([res.resname for res in chain]), custom_map=custom_map)]
+        for chain in pdb_ref.get_chains()
+    ]
+
+    decoy_sequences = [
+        [chain.id, seq1(''.join([res.resname for res in chain]), custom_map=custom_map)]
+        for chain in pdb_decoy.get_chains()
+    ]
+    
+    # Sort sequences
     ref_sequences.sort()
-    decoy_sequences = [[chain.id, seq1(''.join([res.resname for res in chain]), custom_map=custom_map)] for chain in pdb_decoy.get_chains()]
-                            
     decoy_sequences.sort()
-    
-    assert(len(ref_sequences) == len(decoy_sequences))
-    
+
+    print(f"Reference chains: {len(ref_sequences)}, Decoy chains: {len(decoy_sequences)}")
+
+    # Ensure the number of chains in both structures is equal
+    assert len(ref_sequences) == len(decoy_sequences), "Reference and decoy must have the same number of chains."
+
+    # Align sequences and check for empty decoy sequences
     for ind in range(len(ref_sequences)):
+        if not decoy_sequences[ind][1]:  # Check if the decoy sequence is empty
+            print(f"Warning: Decoy sequence for chain {decoy_sequences[ind][0]} is empty. Skipping alignment.")
+            decoy_sequences[ind][1] = "-" * len(ref_sequences[ind][1])  # Use gaps for alignment
+        else:
             pair = pairwise2.align.globalxx(ref_sequences[ind][1], decoy_sequences[ind][1])[0]
-            ref_sequences[ind][1]   = pair.seqA
+            ref_sequences[ind][1] = pair.seqA
             decoy_sequences[ind][1] = pair.seqB
 
+    # Determine residue indices
+    ref_sequences = [
+        [seq[0], [i + 1 for i, res in enumerate(seq[1]) if res != '-']]
+        for seq in ref_sequences
+    ]
+    decoy_sequences = [
+        [seq[0], [i + 1 for i, res in enumerate(seq[1]) if res != '-']]
+        for seq in decoy_sequences
+    ]
 
-    ref_sequences = [[seq[0],[i+1 for i,res in enumerate(seq[1]) if res != '-']] for seq in ref_sequences]
-    decoy_sequences = [[seq[0],[i+1 for i,res in enumerate(seq[1]) if res != '-']] for seq in decoy_sequences]
+    # Identify gapped residues
+    ref_gapped_residues = [
+        [ref_sequences[j][0], list(set(ref_sequences[j][1]) - set(decoy_sequences[j][1]))]
+        for j in range(len(ref_sequences))
+    ]
+    decoy_gapped_residues = [
+        [decoy_sequences[j][0], list(set(decoy_sequences[j][1]) - set(ref_sequences[j][1]))]
+        for j in range(len(decoy_sequences))
+    ]
 
-    ref_gapped_residues = [[ref_sequences[j][0],list(set(ref_sequences[j][1]) -set(decoy_sequences[j][1])) ] for j in range(len(ref_sequences))]  
-    decoy_gapped_residues = [[decoy_sequences[j][0],list(set(decoy_sequences[j][1]) -set(ref_sequences[j][1])) ] for j in range(len(decoy_sequences))]  
+    # Convert to dictionaries for easy access
+    ref_sequences = {key: val for key, val in ref_sequences}
+    decoy_sequences = {key: val for key, val in decoy_sequences}
 
+    ref_gapped_residues = {key: val for key, val in ref_gapped_residues}
+    decoy_gapped_residues = {key: val for key, val in decoy_gapped_residues}
 
-    ref_sequences = {key:val for key, val in ref_sequences}
-    decoy_sequences = {key:val for key, val in decoy_sequences}
-    
-    ref_gapped_residues = {key:val for key, val in ref_gapped_residues}
-    decoy_gapped_residues = {key:val for key, val in decoy_gapped_residues}
- 
-    if not all(x==[] for x in ref_gapped_residues.values()):
-            print('After mapping: Residues removed from reference PDB:')
-            print(ref_gapped_residues)
-    if not all(x==[] for x in decoy_gapped_residues.values()):
-            print('After mapping: Residues removed from decoy     PDB:')
-            print(decoy_gapped_residues)
+    # Print gaps
+    if not all(x == [] for x in ref_gapped_residues.values()):
+        print('After mapping: Residues removed from reference PDB:')
+        print(ref_gapped_residues)
+    if not all(x == [] for x in decoy_gapped_residues.values()):
+        print('After mapping: Residues removed from decoy PDB:')
+        print(decoy_gapped_residues)
 
+    # Assign structures based on mappings
     if remove_non_mapped:
-        pdb_ref = assign(pdb_ref, ref_sequences,ref_gapped_residues )
-        pdb_decoy = assign(pdb_decoy, decoy_sequences,  decoy_gapped_residues)
+        pdb_ref = assign(pdb_ref, ref_sequences, ref_gapped_residues)
+        pdb_decoy = assign(pdb_decoy, decoy_sequences, decoy_gapped_residues)
     else:
-        pdb_ref = assign(pdb_ref, ref_sequences )
+        pdb_ref = assign(pdb_ref, ref_sequences)
         pdb_decoy = assign(pdb_decoy, decoy_sequences)
+
     return pdb_ref, pdb_decoy
 
 def write_PDB(pdb,  file_name):
