@@ -29,11 +29,11 @@ import plotly.express as px
 import plotly.graph_objs as go
 
 n_samples = ''
-lrmsd_f = r'/home/nils/swifttcr/lrmsd_rmsd3'
-irmsd_f = r'/home/nils/swifttcr/irmsd_rmsd3'
-fnat_f  = r'/home/nils/swifttcr/fnat_rmsd3'
-succes_plot_f = 'PIPER_success_plot_'+n_samples
-success_plot_f = 'PIPER_success_rate_plot_'+n_samples
+lrmsd_f = r'results_swifttcr/lrmsd_rmsd3'
+irmsd_f = r'results_swifttcr/irmsd_rmsd3'
+fnat_f  = r'results_swifttcr/fnat_rmsd3'
+succes_plot_f = 'results_swifttcr/PIPER_success_plot_'+n_samples
+success_plot_f = 'results_swifttcr/PIPER_success_rate_plot_'+n_samples
 
 
 def main():
