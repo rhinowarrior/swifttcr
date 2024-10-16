@@ -106,11 +106,11 @@ def is_rigid(key, rigid_models):
 
 def main():
     rmsd_types = ["lrmsd", "irmsd", "fnat"]
-    sampling_file = r'/home/nils/swifttcr/combined_all_rmsd_3'  # Path to your sampling results file
+    sampling_file = r'results_swifttcr/' + 'combined_all_rmsd_3'  # Path to your sampling results file
     res_dict = parse_sampling_results(sampling_file)
 
-    outfilename = Path(r"/home/nils/swifttcr/results_swifttcr/" + "melquiplot" + ".pdf")
-    f = plt.figure()
+    outfilename = Path(r"results_swifttcr/" + "melquiplot" + ".pdf")
+    f = plt.figure(figsize=(10, 6))  # Specify figure size for better space distribution
     ax = plt.gca()
 
     matplotlib.rcParams.update({'font.size': 18})
@@ -132,7 +132,7 @@ def main():
     ]
     legend_proxies_medium, legend_labels_medium = zip(*legend_data_medium)
 
-    rigid_models = sorted(['1ao7'])  # Update this list as needed
+    rigid_models = sorted(['1ao7', '1mwa', '2bnr', '2nx5', '2pye', '3dxa', '3pwp','3qdg', '3qdj', '3utt', '3vxr', '3vxs', '5c0a', '5c0b', '5c0c', '5c07', '5c09', '5hyj', '5ivx', '5nme', '5nmf'])  # Update this list as needed
     medium_models = sorted([model for model in res_dict.keys() if model not in rigid_models])
     stack_h_labels = rigid_models + medium_models
 
@@ -168,14 +168,18 @@ def main():
     ax.set_xlim((0, stack_h - 1))  # Centered
     ax.set_ylim((-1, max_stack_v + 1))
 
-    ax.set_ylabel('Energy rank \n(lower is better)', fontsize=8)
+    ax.set_ylabel('Energy rank \n(lower is better)', fontsize=12)  # Adjusted font size
 
-    stack_h_labels_pos = range(1, stack_h, 2)
+    # Update for uniform x-axis label spacing with monospaced font and increased size
+    stack_h_labels_pos = np.arange(1, stack_h, 2)  # Ensure uniform positioning
     ax.set_xticks(stack_h_labels_pos)
-    ax.set_xticklabels(stack_h_labels, rotation=90, fontsize=8)
+    ax.set_xticklabels(stack_h_labels, rotation=90, fontsize=12, fontfamily='monospace')  # Set monospaced font and increased size
+
     ax.xaxis.set_ticks_position('none')
+    
+    # Adjust plot position to accommodate longer x-axis labels
     box = ax.get_position()
-    ax.set_position([box.x0, box.y0 + box.height * 0.12,
+    ax.set_position([box.x0, box.y0 + box.height * 0.15,
                      box.width, box.height * 0.82])
 
     legend_left = ax.legend(legend_proxies, legend_labels,
@@ -189,7 +193,7 @@ def main():
     ax.add_artist(legend_right)
 
     plt.yticks(fontsize=8)
-    plt.title("Melquiplot cluster irmsd < {} Å".format(3))
+    plt.title("Melquiplot benchmark", fontsize=16)  # Adjusted title size for better balance
     plt.savefig(outfilename, format='pdf', dpi=1500)
 
 if __name__ == "__main__":
