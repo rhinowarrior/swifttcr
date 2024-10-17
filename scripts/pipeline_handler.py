@@ -53,29 +53,3 @@ def check_file_extensions(receptor, ligand):
     if not ligand.endswith(".pdb"):
         print("Ligand file must be a pdb file")
         exit(1)
-
-def check_amount_of_chains_pdb(receptor, ligand):
-    """Checks if the amount of chains are as excepected in the pdb files
-    
-    Args:
-        receptor (str): Path to receptor pdb file
-        ligand (str): Path to ligand pdb file
-    """
-    with open(receptor, "r") as f:
-        # count the amount of unique chains in the receptor file
-        count_chains = set()
-        for line in f:
-            if line.startswith("ATOM"):
-                count_chains.add(line[21])
-        if len(count_chains) != 3:
-            print("peptide-MHC file must have 3 chains")
-            exit(1)
-    with open(ligand, "r") as f:
-        # count the amount of unique chains in the ligand file
-        count_chains = set()
-        for line in f:
-            if line.startswith("ATOM"):
-                count_chains.add(line[21])
-        if len(count_chains) != 2:
-            print("TCR file must have 2 chains")
-            exit(1)

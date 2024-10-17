@@ -168,7 +168,7 @@ def main():
     ax.set_xlim((0, stack_h - 1))  # Centered
     ax.set_ylim((-1, max_stack_v + 1))
 
-    ax.set_ylabel('Energy rank \n(lower is better)', fontsize=12)  # Adjusted font size
+    ax.set_ylabel('Energy rank \n(lower is better)', fontsize=14)  # Adjusted font size
 
     # Update for uniform x-axis label spacing with monospaced font and increased size
     stack_h_labels_pos = np.arange(1, stack_h, 2)  # Ensure uniform positioning
@@ -192,8 +192,8 @@ def main():
     ax.add_artist(legend_left)
     ax.add_artist(legend_right)
 
-    plt.yticks(fontsize=8)
-    plt.title("Melquiplot benchmark", fontsize=16)  # Adjusted title size for better balance
+    plt.yticks(fontsize=12)
+    plt.title("Melquiplot benchmark", fontsize=18)
     plt.savefig(outfilename, format='pdf', dpi=1500)
 
 if __name__ == "__main__":

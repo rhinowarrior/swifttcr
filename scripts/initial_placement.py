@@ -75,7 +75,8 @@ def superpose_and_change_chain_IDs(reference, target, output):
         
         # Align and map chains
         for ref_idx, target_idx in alignment:
-            ref_atom = ref_atoms[ref_idx[1] - 1]  # ref_idx is a tuple (object index, atom index)
+            # Get the atoms for the reference and target residues
+            ref_atom = ref_atoms[ref_idx[1] - 1]
             target_atom = target_atoms[target_idx[1] - 1]
 
             ref_chain = ref_atom.chain
