@@ -20,6 +20,7 @@ import os
 from sys import argv
 from pdb2sql.StructureSimilarity import StructureSimilarity
 from multiprocessing import Pool
+import gc
 
 def add_suffix(path, suffix):
     """Adds a suffix to the filename and returns the new Path object.
@@ -114,6 +115,11 @@ def calc_LRMSD_decoys(ref_file, decoy_files, thread_num):
 
         except Exception as e:
             print(f"Error in {os.path.basename(decoy_file)}: {str(e)}")
+            
+        finally:
+            # Clean up the StructureSimilarity object
+            del sim
+            gc.collect()
 
     # Clean up the unique Lzone file after processing
     if os.path.exists(lzone_file):

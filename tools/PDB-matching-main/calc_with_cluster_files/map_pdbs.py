@@ -18,9 +18,15 @@ Example: python map_pdbs.py pipeline_dir reference_dir output_dir cluster_input
 from Bio.PDB import PDBParser, PDBIO, Select
 from pathlib import Path
 from Bio import pairwise2
+from Bio.PDB.PDBExceptions import PDBConstructionWarning
+import warnings
 from Bio.SeqUtils import seq1
 import sys
 import multiprocessing as mp
+import gc
+
+# Suppress PDBConstructionWarning warnings
+warnings.filterwarnings("ignore", category=PDBConstructionWarning)
 
 def main():
     pipeline_dir = sys.argv[1]  # Directory where decoys are stored
@@ -51,8 +57,11 @@ def main():
 
     # Use multiprocessing with Pool
     with mp.Pool(processes=max_threads) as pool:
-        # Map the tasks to the pool of processes
-        pool.starmap(map_and_save_pdbs, tasks)
+        for i in range(0, len(tasks), max_threads):
+            batch = tasks[i:i+max_threads]
+            gc.collect()
+            pool.starmap(map_and_save_pdbs, batch)
+            gc.collect()  # Explicitly call garbage collection after each batch
                 
             
 def create_model_clus_dict(pipeline_dir, cluster_input="clustering.txt"):
@@ -126,6 +135,7 @@ def map_and_save_pdbs(reference, decoy, output_dir, model_identifier):
     
     write_PDB(pdb_ref, ref_outfile)
     write_PDB(pdb_decoy, decoy_outfile)
+    gc.collect()
     
     return pdb_ref, pdb_decoy
 
