@@ -4,14 +4,16 @@ Function: This script is used to apply the results of the ftmap calculations to 
 Date: 25-09-2024
 Author: Yannick Aarts
 """
+
 from argparse import FileType
-from prody import parsePDBStream, writePDB
 import numpy as np
 from itertools import islice
 import linecache
+import multiprocessing as mp
+from multiprocessing import Pool
+from Bio.PDB import PDBParser, PDBIO, Structure
 
 FTRESULT_DTYPE = np.dtype([('roti', 'i4'), ('tv', ('f8', 3)), ('E', 'f8')])
-from signal import signal, SIGPIPE, SIG_DFL
 
 def read_rotations(file_or_handle):
     """Reads 3x3 rotation matrices from a file.
@@ -28,12 +30,9 @@ def read_rotations(file_or_handle):
     """
     
     rotations = np.loadtxt(file_or_handle)
-
     if rotations.shape[-1] == 10:
         rotations = rotations[:, 1:]
-
     return rotations.reshape(-1, 3, 3)
-
 
 def read_ftresults(filepath, limit=None):
     """Reads ftresults from a file.
@@ -67,11 +66,7 @@ def read_ftresults_stream(f, limit=None):
         ftresults: The ftresults as a numpy array.
     """
     f = iter(f)
-
-    return np.loadtxt(
-        islice(f, 0, limit),
-        dtype=FTRESULT_DTYPE,
-        usecols=(0, 1, 2, 3, 4))
+    return np.loadtxt(islice(f, 0, limit), dtype=FTRESULT_DTYPE, usecols=(0, 1, 2, 3, 4))
 
 
 def get_ftresult(filepath, index):
@@ -89,14 +84,11 @@ def get_ftresult(filepath, index):
     line = linecache.getline(filepath, index + 1)
     if not line:
         return None
-
     ss = line.strip().split()
-    return np.array(
-        (int(ss[0]), [float(c) for c in ss[1:4]], float(ss[4])),
-        dtype=FTRESULT_DTYPE)
+    return np.array((int(ss[0]), [float(c) for c in ss[1:4]], float(ss[4])), dtype=FTRESULT_DTYPE)
 
 
-def apply_ftresult(coords, ftresult, rotations, center=None, out=None):
+def apply_ftresult(coords, ftresult, rotations, center=None):
     """Apply the ftresult to coords.
 
     `coords` and `out` cannot point to the same numpy array.
@@ -113,68 +105,40 @@ def apply_ftresult(coords, ftresult, rotations, center=None, out=None):
     """
     if center is None:
         center = np.mean(coords, axis=0)
-
-    if out is None:
-        out = np.empty_like(coords)
-
-    # Apply the rotation
-    out = np.dot(coords - center, rotations[ftresult['roti']].T)
-    np.add(out, ftresult['tv'] + center, out)
-
-    return out  
+    coords_centered = coords - center
+    rotated_coords = np.dot(coords_centered, rotations[ftresult['roti']].T)
+    transformed_coords = rotated_coords + ftresult['tv'] + center
+    return transformed_coords
 
 
-def apply_ftresults_atom_group(ag,
-                               ftresults,
-                               rotations,
-                               center=None,
-                               out=None):
-    """Apply ftresult(s) to an atomgroup, returning a new atomgroup.
-
-    The new atomgroup will have one coordinate set for each ftresult passed.
-    ftresult can either be a single ftresult object, or an array of ftresult
-    objects.
+def apply_results_worker(args):
+    """Worker function to apply results in parallel.
     
     Args:
-        ag: The atomgroup to apply the ftresults to.
-        ftresults: The ftresults to apply.
-        rotations: The rotation matrices.
-        center: The center of the rotation.
-        out: The atomgroup to write the output to.
-    
-    Raises:
-        ValueError: If ftresults is not an ndarray or void.
-        
-    Returns:
-        out: The atomgroup with the ftresults applied.
+        args: A tuple with the index, ftfile, rotations, pdb_file, and out_prefix
     """
-    orig_coords = ag.getCoords()  # This returns a copy so we can mutate it
-    if center is None:
-        center = np.mean(orig_coords, axis=0)
-    np.subtract(orig_coords, center, orig_coords)
+    index, ftfile, rotations, pdb_file, out_prefix = args
+    parser = PDBParser(QUIET=True)
+    structure: Structure = parser.get_structure("structure", pdb_file)
 
-    # Ensure ftresults is a 1D array
-    try:
-        if len(ftresults.shape) == 0:
-            ftresults = np.expand_dims(ftresults, 0)
-    except:
-        raise ValueError("ftresults does not seem to be an ndarray or void")
+    # Get the first model and its coordinates
+    model = structure[0]
+    coords = np.array([atom.coord for atom in model.get_atoms()])
+    center = np.mean(coords, axis=0)
+    
+    ftresult = get_ftresult(ftfile, index)
+    new_coords = apply_ftresult(coords, ftresult, rotations, center)
 
-    if out is None:
-        out = ag.copy()
+    # Set new coordinates
+    for i, atom in enumerate(model.get_atoms()):
+        atom.coord = new_coords[i]
 
-    # Apply the rotations
-    new_coords = np.dot(rotations[ftresults['roti']],
-                        orig_coords.T).transpose(0, 2, 1)
-    np.add(new_coords, np.expand_dims(ftresults['tv'] + center, 1), new_coords)
-    out._setCoords(new_coords, overwrite=True)
+    # Write PDB output
+    io = PDBIO()
+    io.set_structure(structure)
+    io.save(f"{out_prefix}.{index}.pdb")
 
-    return out
-
-
-signal(SIGPIPE, SIG_DFL)
-
-def apply_results_main(limit, index, rotation, out_prefix, ftfile, rotations, pdb_file):
+def apply_results_main(limit, index, rotation, out_prefix, ftfile, rotations_path, pdb_file, cores):
     """ Apply the results of the ftmap calculations to the pdb files.
     
     Args:
@@ -186,31 +150,23 @@ def apply_results_main(limit, index, rotation, out_prefix, ftfile, rotations, pd
         rotations (str): The path to the file to read the rotations from.
         pdb_file (str): The path to the pdb file to read from.
     """
+    
+    rotations = read_rotations(rotations_path)
+    tasks = []
 
-    pdb_file = FileType('r')(pdb_file)
-    pdb = parsePDBStream(pdb_file)
-    rotations = read_rotations(rotations)
-
-    coords = pdb.getCoords()
-    center = np.mean(coords, axis=0)
-    np.subtract(coords, center, coords)
     if index is not None:
-        ftresult = get_ftresult(ftfile, index)
-
-        coords = pdb.getCoords()
-        pdb.setCoords(apply_ftresult(coords, ftresult, rotations))
-
-        writePDB(out_prefix+".pdb", pdb)
+        tasks.append((index, ftfile, rotations, pdb_file, out_prefix))
     elif rotation is not None:
-        ftreults = read_ftresults(ftfile)
-
-        writePDB(out_prefix+".pdb", pdb)
+        parser = PDBParser(QUIET=True)
+        structure: Structure = parser.get_structure("structure", pdb_file)
+        io = PDBIO()
+        io.set_structure(structure)
+        io.save(out_prefix + ".pdb")
+        return
     else:
         ftresults = read_ftresults(ftfile, limit=limit)
+        indices = range(len(ftresults))
+        tasks.extend([(i, ftfile, rotations, pdb_file, out_prefix) for i in indices])
 
-        new_ag = apply_ftresults_atom_group(pdb, ftresults, rotations)
-
-        # Write the new atomgroup to a PDB file
-        for i in range(new_ag.numCoordsets()):
-            new_ag.setACSIndex(i)
-            writePDB("{}.{}.pdb".format(out_prefix, i), new_ag, csets=i)
+    with Pool(cores) as pool:
+        pool.map(apply_results_worker, tasks) 

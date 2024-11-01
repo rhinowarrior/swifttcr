@@ -276,19 +276,27 @@ def get_interface_residues(chain1_xyzr, chain2_xyzr, chain1_del_mask, chain2_del
         list: List of interface residues of chain 1.
         list: List of interface residues of chain 2.
     """
-    chain_1_xyz = chain1_xyzr[:, :-1]
-    chain_2_xyz = chain2_xyzr[:, :-1]
+    chain_1_xyz, chain_2_xyz = chain1_xyzr[:, :-1], chain2_xyzr[:, :-1]
+    
+    # Apply deletion masks to coordinates, excluding empty atoms
+    valid_chain_1 = chain_1_xyz[chain1_del_mask.flatten() != 0]
+    valid_chain_2 = chain_2_xyz[chain2_del_mask.flatten() != 0]
+    
+    # Calculate distances only on valid atoms
+    distances = torch.cdist(valid_chain_1, valid_chain_2)
 
-    # Calculate the distances between all atoms.
-    distances = torch.cdist(chain_1_xyz, chain_2_xyz)
+    # Mask distances based on cutoff
+    interface_pairs = distances <= cutoff
 
-    inside_radius = distances <= cutoff
-    # Mask out the deletions.
-    inside_radius[chain1_del_mask.flatten() == 0, :] = False
-    inside_radius[:, chain2_del_mask.flatten() == 0] = False
-    # Get the indices of the interface residues.
-    chain_1_indices, chain_2_indices = inside_radius.nonzero(as_tuple=True)
-    return [chain1_xyzr[index][-1].int().item() for _, index in enumerate(chain_1_indices)], [chain2_xyzr[index][-1].int().item() for _, index in enumerate(chain_2_indices)]
+    # Map the resulting pairs back to the original residue indices
+    chain_1_indices = torch.nonzero(interface_pairs.sum(1)).flatten()
+    chain_2_indices = torch.nonzero(interface_pairs.sum(0)).flatten()
+
+    # Get interface residue numbers using the indices in the original tensors
+    chain1_residues = [int(chain1_xyzr[i, -1].item()) for i in chain_1_indices]
+    chain2_residues = [int(chain2_xyzr[i, -1].item()) for i in chain_2_indices]
+
+    return chain1_residues, chain2_residues
 
 
 def _get_interface_residues(vars):

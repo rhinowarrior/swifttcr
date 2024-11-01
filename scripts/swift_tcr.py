@@ -43,6 +43,7 @@ from contextlib import redirect_stdout
 import pipeline_handler
 import warnings
 import shutil
+import time
 
 
 # Add the project directory to the path so we can import the modules
@@ -90,6 +91,9 @@ if __name__ == "__main__":
     pipeline_handler.check_file_extensions(receptor_path, ligand_path)
     
     # Renumbers the TCR file and ignore the warnings that bio.pdb throws
+    start_time_all = time.time()
+    start_time_prep = time.time()
+    
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", module='Bio.PDB')
         ImmunoPDB.immunopdb_main(ligand_path, out_ligand_path)
@@ -104,8 +108,11 @@ if __name__ == "__main__":
     flip_alternative.reorder_residues_in_structure(ligand_pnon, ligand_pnon)
     
     print("Finished with preparing the files")
+    
+    end_time_prep = time.time()
+    print(f"Time taken for preparing the files: {end_time_prep - start_time_prep} seconds")
         
-    # gets extra path names for later use
+    # # gets extra path names for later use
     receptor = os.path.basename(receptor_pnon)
     receptor_ms = os.path.basename(receptor_pnon).replace(".pdb", ".ms")
 
@@ -113,8 +120,12 @@ if __name__ == "__main__":
     ligand_ms = os.path.basename(ligand_pnon).replace(".pdb", ".ms")
         
     # runs initial placement
+    start_time_initial = time.time()
     initial_placement.initial_placement_main(receptor_pnon, ligand_pnon, output_path, reference_receptor, reference_ligand)
+    end_time_initial = time.time()
 
+    print(f"Time taken for initial placement: {end_time_initial - start_time_initial} seconds")
+    
     print("Finished with aligning the target structures to the reference structures and changing the chainIDs")
 
     # gets the paths for the ms files
@@ -122,13 +133,18 @@ if __name__ == "__main__":
     output_ligand_path = os.path.join(output_path, ligand)
     
     # runs pdb2ms
+    start_time_pdb2ms = time.time()
     pdb2ms.pdb2ms_main(output_receptor_path, output_ligand_path)
+    end_time_pdb2ms = time.time()
+    
+    print(f"Time taken for pdb2ms: {end_time_pdb2ms - start_time_pdb2ms} seconds")
     
     print("Finished with adding attractions and creating the ms files")
 
     os.chdir(output_path)
 
     # runs piper
+    start_time_piper = time.time()
     subprocess.run([
         piper_path + "/piper_attr",
         "-k1",
@@ -144,9 +160,18 @@ if __name__ == "__main__":
     )
     
     print("Finished with running piper")
+    
+    end_time_prep = time.time()
+    
+    print(f"Time taken for piper: {end_time_prep - start_time_piper} seconds")
 
     # runs postfilter
-    postfilter.post_filter_main(output_path, "ft.000.00", rotations, restraint_path, receptor, ligand, str(args.outprefix))
+    
+    time_start_postfilter = time.time()
+    postfilter.post_filter_main(output_path, "ft.000.00", rotations, restraint_path, receptor, ligand, str(args.outprefix), cores)
+    time_end_postfilter = time.time()
+    
+    print(f"Time taken for postfilter: {time_end_postfilter - time_start_postfilter} seconds")
     
     print("Finished with filtering pipeline results")
 
@@ -156,8 +181,11 @@ if __name__ == "__main__":
     os.chdir("rotated")
 
     # runs apply_results
-    apply_results.apply_results_main(1000, None, None,  args.outprefix, os.path.join(output_path, "ft.000.00"), os.path.join(output_path,rotations), os.path.join(output_path,ligand))
-    
+    time_start_apply_results = time.time()
+    apply_results.apply_results_main(1000, None, None,  args.outprefix, os.path.join(output_path, "ft.000.00"), os.path.join(output_path,rotations), os.path.join(output_path,ligand), cores)
+    time_end_apply_results = time.time()
+
+    print(f"Time taken for apply_results: {time_end_apply_results - time_start_apply_results} seconds")    
     print("Finished with creating the rotated structures")
 
     os.chdir("..")
@@ -167,16 +195,26 @@ if __name__ == "__main__":
         os.mkdir("merged")
 
     # runs merge_pdbs
-    merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged")
+    time_start_merge_pdbs = time.time()
+    merge_pdbs.merge_pdbs_main(receptor,"rotated", "merged", cores)
+    time_end_merge_pdbs = time.time()
+    
+    print(f"Time taken for merge_pdbs: {time_end_merge_pdbs - time_start_merge_pdbs} seconds")
     
     print("Finished with merging the pMHC and rotated TCR files")
 
     # runs pairwise_rmsd
+    time_start_pairwise_rmsd = time.time()
+    
     pairwise_rmsd.calc_rmsd("merged", "irmsd.csv", "A", "D", 10,  n_cores=cores)
 
+    time_end_pairwise_rmsd = time.time()
+    
+    print(f"Time taken for pairwise_rmsd: {time_end_pairwise_rmsd - time_start_pairwise_rmsd} seconds")
     print("Finished with calculating the pairwise RMSD")
     
-    # runs clusteringS
+    # runs clustering
+    time_start_clustering = time.time()
     output_file = os.path.join(output_path, 'clustering.txt')
 
     output_buffer = io.StringIO()
@@ -191,3 +229,10 @@ if __name__ == "__main__":
 
     print("Finished with clustering the structures")
     print(f"Output written to {output_file}")
+    
+    time_end_clustering = time.time()
+    print(f"Time taken for clustering: {time_end_clustering - time_start_clustering} seconds")
+    
+    end_time_all = time.time()
+    
+    print(f"Total time taken: {end_time_all - start_time_all} seconds")

@@ -1,4 +1,4 @@
-#This script runs the two Python scripts map_pdbs.py and calculate_rmsd.py in #sequence. to calculate the RMSD between the structures in the input directory #and the reference structures in the reference_structures_directory. The output #is saved in the output_file_name.
+#This script runs the two Python scripts map_pdbs.py and calculate_rmsd.py in #sequence. to calculate the RMSD between the structures in the input directory #and the reference structures in the reference_structures_directory. The output is saved in the output_file_name.
 
 #!/bin/bash
 

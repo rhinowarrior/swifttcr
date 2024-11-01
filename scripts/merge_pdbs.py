@@ -13,50 +13,66 @@ from pathlib import Path
 import subprocess
 import os
 import flip_alternative
+from multiprocessing import Pool
+import gc
 
 def run_command(command):
     """
     Helper function to run a command with subprocess.run and handle errors.
-    
-    Args:
-        command (str): The shell command to be executed.
-        
-    Returns:
-        str: The standard output of the command if successful.
-    
-    Raises:
-        subprocess.CalledProcessError: If the command fails.
     """
     try:
-        # Run the command and wait for it to complete
         result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-        
-        # Return the standard output
         return result.stdout
-
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while running command: {command}")
         print(f"Error message: {e.stderr}")
-        raise  # Re-raise the exception after logging it
+        raise
 
+def process_ligand(f, receptor_name, p_out):
+    """
+    Process each ligand PDB file to create the merged output.
+    """
+    ligand_name = "{}".format(f.stem + "_rename.pdb")
+    output_E = "{}".format(f.stem + "_Eshift.pdb")
+    output_D = "{}".format(f.stem + "_Dshift.pdb")
+
+    # Shift chain E by 2000 residues and rename to chain D
+    command_shift = f"pdb_selchain -E {f} | pdb_shiftres -2000 | pdb_chain -D > {output_E}"
+    command_lig = f"pdb_selchain -D {f} > {output_D}"
+    command_DE = f"pdb_merge {output_D} {output_E} > {ligand_name}"
+
+    # Merge receptor and ligand into a single file
+    merged_name = "merged_" + str(f).split(".")[1] + ".pdb"
+    merge_command = f"cat {receptor_name} {ligand_name} | grep '^ATOM ' > {Path(p_out, merged_name)}"
+
+    # Run commands in sequence
+    run_command(command_shift)
+    run_command(command_lig)
+    run_command(command_DE)
+    run_command(merge_command)
+
+    # Remove intermediate files
+    os.remove(output_D)
+    os.remove(output_E)
+    os.remove(ligand_name)
     
-def merge_pdbs_main(receptor, ligand, output_dir):
-    """Merge pdb files and rename chains to A for receptor and D for ligand. The receptor (pMHC) has 3 chains A, B, and C, and the ligand (TCR) has 2 chains D and E.
+    # Force garbage collection after processing each ligand
+    gc.collect()
 
+def merge_pdbs_main(receptor, ligand, output_dir, num_cores):
+    """
+    Merge pdb files and rename chains to A for receptor and D for ligand.
+    
     Args:
         receptor (str): Path to the receptor pdb file
-        ligand (str): Path to the ligand pdb file
+        ligand (str): Path to the ligand pdb file or directory
         output_dir (str): Path to the output directory
+        num_cores (int): Number of cores to use for parallel processing
     """
     p = Path(ligand)
     p_rec = Path(receptor)
     p_out = Path(output_dir)
-    print("Ligand: ", p)
-    print("Outputdir: ", p_out)
-    print("Receptor: ", p_rec)
     os.chdir(p_rec.parent)
-
-    receptor_name = "{}".format(p_rec.stem + "_rename.pdb")
 
     # This command makes it so the peptide chain is seperated from chain A in the receptor because the peptide chain with the current code made part of the mhc and it tries to connect to it in pymol.
     # This command doesn't work because in pairwise_rmsd.py it tries to pad the chains which crashes the programm so this will work once we replace gradpose with our own code.
@@ -68,45 +84,21 @@ def merge_pdbs_main(receptor, ligand, output_dir):
     # "pdb_merge pep.pdb mhc.pdb | pdb_tidy > {}; "  # Properly concatenate mhc.pdb and pep.pdb into pMHC.pdb, appending to the output
     # "rm mhc.pdb pep.pdb"  # Remove intermediate files mhc.pdb and pep.pdb
     # ).format(str(p_rec), str(p_rec), receptor_name)
-    
-    # Command for receptor that selects chains A, B, and C, renames them to A, and renumbers residues starting from 1
+    receptor_name = "{}".format(p_rec.stem + "_rename.pdb")
     command = f"pdb_tidy {p_rec} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1  > {receptor_name}"
 
     # Run receptor command
-    run_command(command)    
-
+    run_command(command)
     flip_alternative.reorder_residues_in_structure(receptor_name, receptor_name)
 
     if p.is_dir():
-        for f in p.iterdir():
-            if f.suffix == ".pdb":
-                ligand_name = "{}".format(f.stem + "_rename.pdb")
-                output_E = "{}".format(f.stem + "_Eshift.pdb")
-                output_D = "{}".format(f.stem + "_Dshift.pdb")
+        ligand_files = [f for f in p.iterdir() if f.suffix == ".pdb"]
 
-                # Shift chain E by 2000 residues and rename to chain D
-                command_shift = f"pdb_selchain -E {f} | pdb_shiftres -2000 | pdb_chain -D > {output_E}"
-                
-                # Select chain D
-                command_lig = f"pdb_selchain -D {f} > {output_D}"
-    
-                # Merge chain D and E
-                command_DE = f"pdb_merge {output_D} {output_E} > {ligand_name}"
-                
-                # Merge receptor and ligand into a single file
-                merged_name = "merged_" + str(f).split(".")[1] + ".pdb" 
-                merge_command = f"cat {receptor_name} {ligand_name} | grep '^ATOM ' > {Path(p_out, merged_name)}"
-
-                # Run all commands in sequence
-                run_command(command_shift)
-                run_command(command_lig)
-                run_command(command_DE)
-                run_command(merge_command)
-                
-                # Remove intermediate files
-                os.remove(output_D)
-                os.remove(output_E)
-                os.remove(ligand_name)
-
+        # Use multiprocessing to process each ligand file in parallel with specified number of cores
+        with Pool(num_cores) as pool:
+            pool.starmap(process_ligand, [(f, receptor_name, p_out) for f in ligand_files])
+        
+        # Collect garbage after all ligand processing
+        gc.collect()
     else:
-        print("Ligand path is not a directory.")    
+        print("Ligand path is not a directory.")

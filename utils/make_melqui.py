@@ -5,12 +5,6 @@ Function: Create a melqui plot from the rmsd values of the models
 Date: 04-06-2024 11:47
 Author: Yanic
 """
-"""
-Created on Tue Jun  4 11:47:09 2024
-
-@author: yanic
-Replicate melqui plot
-"""
 
 """
 Input:

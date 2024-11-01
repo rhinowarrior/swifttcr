@@ -13,10 +13,11 @@ import json
 from pdb2sql import pdb2sql
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+from multiprocessing import Pool
 
-LOCAL_COORDINATE_DICTIONARY = {}#local dictionary to avoid duplicate lookups in pdb files.
+LOCAL_COORDINATE_DICTIONARY = {}  # Local dictionary to avoid duplicate lookups in pdb files.
 
-def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, outfilename):
+def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, outfilename, num_cores):
     """Main function to filter piper results based on distance restraints.
 
     Args:
@@ -27,6 +28,7 @@ def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, 
         receptor (str): The path to the receptor pdb file
         ligand (str): The path to the ligand pdb file
         outfilename (str): The name of the output file
+        num_cores (int): The number of CPU cores to use for processing
     """
     start = time.time_ns()
     ft_file = output_dir + ft_file
@@ -36,18 +38,18 @@ def post_filter_main(output_dir, ft_file, rot_file, res_file, receptor, ligand, 
     ligand = ligand
     outfilename = output_dir + outfilename
 
-    # Parse the ft, rot and res files
+    # Parse the ft, rot, and res files
     ft_dict = parse_ft_file(ft_file)
     rot_dict = parse_rot_file(rot_file)
     restraints = parse_res_file(res_file)
-    
-    # Filter the ft file based on the restraints
-    index_to_keep = post_filter(ft_dict, rot_dict, restraints, receptor, ligand)
+
+    # Filter the ft file based on the restraints using multiprocessing
+    index_to_keep = post_filter(ft_dict, rot_dict, restraints, receptor, ligand, num_cores)
 
     # Write the filtered ft file to the output file
     filter_file_by_indices(ft_file, outfilename, index_to_keep)
     stop = time.time_ns()
-    print("Time to run: ", stop-start)
+    print("Time to run: ", stop - start)
 
 
 def filter_file_by_indices(input_file, output_file, indices):
@@ -134,11 +136,9 @@ def parse_res_file(res_file):
     Returns:
         json object: restraints
     """
-    f = open(res_file, 'r')
-    json_line = f.read()
-    f.close()
+    with open(res_file, 'r') as f:
+        json_line = f.read()
     restraints = json.loads(json_line)
-
     return restraints
 
 
@@ -153,37 +153,56 @@ def get_pdb_coords(model, chains, residues):
     Returns:
        list : list of coordinates
     """
-    #optionally implement speedup with dictionary instead of repeated receptor and ligand lookup
     if model in LOCAL_COORDINATE_DICTIONARY:
         pdb = LOCAL_COORDINATE_DICTIONARY[model]
     else:
         pdb = pdb2sql(model)
         LOCAL_COORDINATE_DICTIONARY[model] = pdb
-    xyz = pdb.get('x,y,z', chainID = chains, resSeq = residues, name = ['CA'])
+    xyz = pdb.get('x,y,z', chainID=chains, resSeq=residues, name=['CA'])
     return xyz
 
 
-def post_filter(ft_dict, rot_dict, restraints, receptor, ligand):
-    """Apply restraints to receptor and rotated + translated ligand.
+def post_filter(ft_dict, rot_dict, restraints, receptor, ligand, num_cores):
+    """Apply restraints to receptor and rotated + translated ligand using multiprocessing.
 
-    Keep rotations that satisfy restraints.
-    
     Args:
         ft_dict (dict): ft file with piper results
         rot_dict (dict): prm file with rotations
         restraints (json): distance restraints
         receptor (str): path to receptor pdb file
         ligand (str): path to ligand pdb file
-    
+        num_cores (int): number of cores to use for multiprocessing
+
     Returns:
         list: list of indices to keep
     """
-    filtered_ft_file = []
-    for key, (i, translation) in ft_dict.items():
-        rot_mat = rot_dict[key]
-        if check_restraints(restraints, rot_mat, translation, receptor, ligand):
-            filtered_ft_file.append(i)#index of lines to keep.
-    return filtered_ft_file
+    # Prepare tasks as a list of tuples for each transformation index
+    tasks = [(key, translation, rot_dict[key], restraints, receptor, ligand) for key, (i, translation) in ft_dict.items()]
+
+    # Use a multiprocessing Pool to distribute the tasks across the specified number of cores
+    with Pool(processes=num_cores) as pool:
+        results = pool.starmap(check_restraints_wrapper, tasks)
+    
+    # Collect indices of lines to keep based on results
+    indices_to_keep = [ft_dict[key][0] for key, keep in zip(ft_dict.keys(), results) if keep]
+    return indices_to_keep
+
+
+def check_restraints_wrapper(key, translation, rot_mat, restraints, receptor, ligand):
+    """Wrapper for multiprocessing check_restraints to keep function signature compatible with starmap.
+    
+    Args:
+        key (int): index
+        translation (tuple): translation
+        rot_mat (list): rotation matrix
+        restraints (json): distance restraints
+        receptor (str): path to receptor pdb file
+        ligand (str): path to ligand pdb file
+    
+    Returns:
+        bool: True if restraints are satisfied, False otherwise
+    """
+    return check_restraints(restraints, rot_mat, translation, receptor, ligand)
 
 
 def check_restraints(restraints, rot_mat, translation, receptor, ligand):
@@ -207,28 +226,23 @@ def check_restraints(restraints, rot_mat, translation, receptor, ligand):
         valid = 0
         group_res = group['restraints']
         for group_r in group_res:
-            #get the restraints
             rec_chain = group_r['rec_chain']
             rec_resid = group_r['rec_resid']
             lig_chain = group_r['lig_chain']
             lig_resid = group_r['lig_resid']
             dmax = group_r['dmax']
             dmin = group_r['dmin']
-            #get the coordinates
             coords_receptor = get_pdb_coords(receptor, [rec_chain], [rec_resid])
             coords_ligand = get_pdb_coords(ligand, [lig_chain], [lig_resid])
-            #check if restraints are satisfied
-            res_bool = validate(coords_receptor, coords_ligand, rot_mat, translation, dmin, dmax)
-            if res_bool:
-                valid +=1
+            if validate(coords_receptor, coords_ligand, rot_mat, translation, dmin, dmax):
+                valid += 1
         if valid >= required_group:
               total += 1
-    if total >= total_required:
-        return True
+    return total >= total_required
 
 
 def validate(xyz1, xyz2, r1, translation, dmin, dmax):
-    """Validate if restraints are satisfied
+    """Validate if restraints are satisfied.
     
     Args:
         xyz1 (list): coordinates of receptor
@@ -238,32 +252,22 @@ def validate(xyz1, xyz2, r1, translation, dmin, dmax):
         dmin (float): minimum distance
         dmax (float): maximum distance
     
-    returns:
+    Returns:
         bool: True if restraints are satisfied, False otherwise
     """
-    #take mean of coordinates
-    if xyz1 == []:
+    if not xyz1 or not xyz2:
         return True
-    if xyz2 == []:
-        return True
-    #mean of coordinates
-    mean_xyz1 = np.mean(np.array(xyz1), axis = 0)
-    mean_xyz2 = np.mean(np.array(xyz2), axis = 0)
+    mean_xyz1 = np.mean(np.array(xyz1), axis=0)
+    mean_xyz2 = np.mean(np.array(xyz2), axis=0)
     rotation_matrix = np.array(r1).reshape(3, 3)
-    #apply rotation and translation
     r = R.from_matrix(rotation_matrix)
-    #transorm the coordinates
     transformed_coords = r.apply(mean_xyz2) + np.array(translation)
-
     distance = coord_distance(mean_xyz1, transformed_coords)
-    if distance >= dmin and distance <= dmax:
-        return True
-    else:
-        return False
+    return dmin <= distance <= dmax
 
 
 def coord_distance(coord1, coord2):
-    """Calculate distance between two coordinates
+    """Calculate distance between two coordinates.
 
     Args:
         coord1 (tuple): coordinates of first atom
@@ -272,9 +276,4 @@ def coord_distance(coord1, coord2):
     Returns:
         float: distance between the two coordinates
     """
-    (x1, y1, z1) = coord1
-    (x2, y2, z2) = coord2
-    # Calculate the distance between the two coordinates
-    distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-    return distance
-
+    return math.sqrt(sum((c1 - c2) ** 2 for c1, c2 in zip(coord1, coord2)))

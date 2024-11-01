@@ -7,8 +7,8 @@ Author: Yannick Aarts
 """
 
 """
-- Need to make the input not hardcoded and need to add doctrings
-- Clean up the code
+Example usage:
+python3 plot_benchmark_success_rates.py lrmsd.txt irmsd.txt fnat.txt success_plot success_rate_plot
 """
 from sys import argv
 import numpy as np
@@ -37,7 +37,12 @@ def main():
     fnat_f = argv[3]
     success_plot_f = argv[4]
     success_rate_plot_f = argv[5]
-
+    
+    # Check if the correct number of arguments is provided no more or less
+    if len(argv) != 6:
+        print("Usage: python3 plot_benchmark_success_rates.py lrmsd.txt irmsd.txt fnat.txt success_plot success_rate_plot")
+        exit(1)
+    
     lrmsd_dict = parse_results(lrmsd_f)
     irmsd_dict = parse_results(irmsd_f)
     fnat_dict = parse_results(fnat_f)
