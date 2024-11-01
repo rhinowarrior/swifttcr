@@ -149,12 +149,27 @@ def process_model(args):
         print(f"Files do not exist: {ref_file} or {decoy_file}")
         return index, model_identifier, file_number, [], [], []  # Empty results for missing files
 
+def set_thread_limit(num_threads):
+    """
+    Sets thread limit for multi-threaded libraries like NumPy, MKL, OpenMP.
+    
+    Args:
+        num_threads (int): Number of threads to use.
+    """
+    os.environ["OMP_NUM_THREADS"] = str(num_threads)
+    os.environ["MKL_NUM_THREADS"] = str(num_threads)
+    os.environ["NUMEXPR_NUM_THREADS"] = str(num_threads)
+    os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
+
 def main():
     mapped_dir = Path(argv[1])     # Directory containing the mapped files
     original_dir = Path(argv[2])   # Directory with original reference models
     cluster_input = argv[3]        # Name of the clustering file
     outfile_base = Path(argv[4])   # Convert to Path object
     num_processes = int(argv[5])   # Number of processes specified by the user
+    
+    # Set thread limit for multi-threaded libraries
+    set_thread_limit(1)
 
     model_dict = search_for_clustering_files(original_dir, cluster_input)
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-
 """
-Usage: Can be used to renumber a bound TCR-p-MHC complex to match the numbering of the p-MHC or can be use to renumber a p-MHC to the numbering of a bound TCR-p-MHC.
-
+Name: renumber_mhc.py
+Function: renumber a bound TCR-p-MHC complex to match the numbering of the p-MHC or renumber a p-MHC to the numbering of a bound TCR-p-MHC.
+Date: 10-10-2024
+Author: Nils Smit
 """
 
 from typing import Dict, List
@@ -15,7 +16,6 @@ from Bio.PDB.Residue import Residue
 from Bio.PDB.PDBParser import PDBParser
 import Bio.PDB as PDB
 from Bio.PDB import PDBIO
-from Bio.PDB.PDBExceptions import PDBConstructionException
 from pymol import cmd as pymol_cmd
 
 # PDB parser from Biopython

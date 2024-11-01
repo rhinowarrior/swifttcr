@@ -1,5 +1,8 @@
-"""Script to convert pdb files to ms files with selected attractive residues.
-Author: Jan Aarts
+"""
+Name: pdb2ms.py
+Function: Script to convert pdb files to ms files with selected attractive residues.
+Date: 04-06-2024
+Author: Yannick Aarts
 
 ms file format
     COLUMNS        DATA  TYPE    FIELD        DEFINITION

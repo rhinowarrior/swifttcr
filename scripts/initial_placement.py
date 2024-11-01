@@ -11,8 +11,6 @@ Author: Nils Smit, Li Xue
 """
 In the future it is beter to renumber the pMHC to IMGT numbering so that we can look at only a specific residue in both the reference and target. This will make it faster to find which chain is superimposed to which chain in the reference.
 Make it so that the peptide is selected based on if it is shorter than 30 aminoacids.
-
-Todo: rewrite script summary
 """
 
 # Have to import cmd because that stops the warning from PyMOL because now i think it can overwrite the cmd module and otherwise pymol will give a warning

@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 16 14:52:30 2023
+Name: plot_benchmark_success_rates.py
+Function: Script to plot T1, T5, T10, T20, T50, T100 for every case, colored by Capri criteria.
+Date: 16-05-2023 14:52
+Author: Yannick Aarts
+"""
 
-@author: yanic
-Script to plot T1, T5, T10, T20, T50, T100 for every case, colored by Capri criteria.
-
+"""
+- Need to make the input not hardcoded and need to add doctrings
+- Clean up the code
 """
 from sys import argv
 import numpy as np
@@ -21,56 +25,36 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 
-
-
 import pandas as pd
 
 import plotly.express as px
 import plotly.graph_objs as go
 
-n_samples = ''
-lrmsd_f = r'results_swifttcr/lrmsd_rmsd3'
-irmsd_f = r'results_swifttcr/irmsd_rmsd3'
-fnat_f  = r'results_swifttcr/fnat_rmsd3'
-succes_plot_f = 'results_swifttcr/PIPER_success_plot_'+n_samples
-success_plot_f = 'results_swifttcr/PIPER_success_rate_plot_'+n_samples
-
 
 def main():
+    lrmsd_f = argv[1]
+    irmsd_f = argv[2]
+    fnat_f = argv[3]
+    success_plot_f = argv[4]
+    success_rate_plot_f = argv[5]
 
     lrmsd_dict = parse_results(lrmsd_f)
     irmsd_dict = parse_results(irmsd_f)
     fnat_dict = parse_results(fnat_f)
-    rmsd_plot_name = succes_plot_f
-    success_plot_name = success_plot_f
+    rmsd_plot_name = success_plot_f
+    success_plot_name = success_rate_plot_f
 
     labels = [1,5,10,20,50,100]
 
     color_matrix_all = eval_model_qualities(lrmsd_dict, labels,  irmsd_dict, fnat_dict, rmsd_plot_name)
    
-
-    #print(color_matrix_all)
     with open('data.txt', 'w') as f:
         for model in color_matrix_all:
             f.write(model + "\n")
             f.write(str(color_matrix_all[model]) + "\n")
 
-    # # Save to a text file
-    # with open('data.txt', 'w') as f:
-    #     for model in color_matrix_all:
-    #         print(model)
-    #     json.dump(color_matrix_all, f)
-
-    # # Convert numpy arrays to lists
-    # data = {key: value.tolist() if isinstance(value, np.ndarray) else value for key, value in color_matrix_all.items()}
-
-    # # Save to a text file
-    # with open('data.txt', 'w') as f:
-    #     json.dump(data, f)
-
     color_matrix_top = calc_max_values([1, 5, 10, 20, 50, 100], color_matrix_all)
 
-    #print(color_matrix_top)
    
     color_matrix = make_rmsd_plot_all_at_one(color_matrix_top, labels, rmsd_plot_name)
 
@@ -81,7 +65,6 @@ def main():
     colors = ['darkgreen', 'green', 'lightgreen','white']
 
     color_counts, percenteages = calculate_color_percentages(color_matrix, labels)
-    #print(percenteages)
     plot_success_rate(percenteages, success_plot_name)
 
 
@@ -144,29 +127,26 @@ def eval_model_qualities(l_dict, labels ,  i_dict=False, f_dict=False, rmsd_plot
         print(lrmsd_values,irmsd_values,frmsd_values)
 
         model_quality = np.zeros((len(f_dict[pdb_id])),dtype=int)
-        #print(pdb_id, model_quality)
         for j, (lrmsd, irmsd, frmsd) in enumerate(zip(lrmsd_values, irmsd_values, frmsd_values)):
-            
-            # for k in range(len(l_thresholds)-1):
-                if  ((frmsd >= 0.5) and ((lrmsd <= 1) or  ( irmsd <= 1))):
-                    model_quality[j] = 3
-                    
-                elif  ((frmsd >= 0.3) and ((lrmsd <= 5) or  ( irmsd <= 2))):
-                    model_quality[j] = 2
-                    
-                elif  ((frmsd >= 0.1) and ((lrmsd <= 10) or  (irmsd <= 4))):
-                    model_quality[j] = 1
-                    
-                elif  (frmsd < 0.1 ) :
-                    model_quality[j] = 0
-                    
-                else:
-                    print(pdb_id,lrmsd, irmsd, frmsd)
+            if  ((frmsd >= 0.5) and ((lrmsd <= 1) or  ( irmsd <= 1))):
+                model_quality[j] = 3
+                
+            elif  ((frmsd >= 0.3) and ((lrmsd <= 5) or  ( irmsd <= 2))):
+                model_quality[j] = 2
+                
+            elif  ((frmsd >= 0.1) and ((lrmsd <= 10) or  (irmsd <= 4))):
+                model_quality[j] = 1
+                
+            elif  (frmsd < 0.1 ) :
+                model_quality[j] = 0
+                
+            else:
+                print(pdb_id,lrmsd, irmsd, frmsd)
 
-                #print(pdb_id, model_quality)
-                color_matrix_all[pdb_id]= model_quality   
-                i+=1
-    
+            #print(pdb_id, model_quality)
+            color_matrix_all[pdb_id]= model_quality   
+            i+=1
+
     return color_matrix_all
 
 
@@ -174,11 +154,8 @@ def make_rmsd_plot_all_at_one(l_dict, labels, rmsd_plot_name="rmsd_plot"):
 
     rigid_models = ['1ao7', '1mwa', '2bnr', '2nx5', '2pye', '3dxa', '3pwp','3qdg', '3qdj', '3utt', '3vxr', '3vxs', '5c0a', '5c0b', '5c0c', '5c07', '5c09', '5hyj', '5ivx', '5nme', '5nmf']
     medium_models = [model for model in l_dict if model not in rigid_models]
-    # Define color thresholds
-    # rigid_colors = ['darkgreen', 'green', 'lightgreen']
-    # medium_colors = ['darkblue', 'blue', 'lightblue']
-
-        
+    
+    # Define color thresholds        
     rigid_colors = ['white','lightgreen', 'green', 'darkgreen']
     medium_colors = ['white','lightblue', 'blue', 'darkblue']
     l_thresholds = [0, 1, 5, 10]  # Threshold values for color levels
@@ -225,10 +202,6 @@ def make_rmsd_plot_all_at_one(l_dict, labels, rmsd_plot_name="rmsd_plot"):
                     ax.add_patch(rect)  
                     
 
-    #   color_dict[model] = colors[i,:]
-    # rigid_models[1]='*1mwa'
-    # rigid_models[-3]='*5ivx'
-
     colors[colors == 0] = 'white'
 
     rigid_models_u = [pdb_id.upper() for pdb_id in rigid_models]
@@ -246,35 +219,16 @@ def make_rmsd_plot_all_at_one(l_dict, labels, rmsd_plot_name="rmsd_plot"):
     
     # Set x and y axis labels
     ax.set_xticks(np.arange(len(l_dict)))
-    #ax.set_xticklabels(t_dict.keys())
-    #ax.set_xticklabels(sorted(rigid_models) + sorted(medium_models), rotation=90, fontsize=22, fontname='Arial')  # Rotate and sort labels
-    #ax.set_yticklabels(['Top ' + str(label) for label in labels], fontsize=24, fontname='Arial', fontweight='bold')
 
     ax.set_xticklabels(sorted(rigid_models_u) + sorted(medium_models_u), rotation=90, fontsize=8, fontname='DejaVu Sans Mono')  # Rotate and sort labels
-    #ax.set_yticks(np.arange(len(labels)))
-    #ax.set_yticklabels(['Top ' + str(label) for label in labels], fontsize=24, fontname='Helvetica', ha='left')
-    # Set y-axis tick labels with left alignment
 
     # Set y-axis tick labels with left alignment
     ax.set_yticks(np.arange(len(labels)) - 0.2)  # Adjust the value as needed
     ax.set_yticklabels(['Top ' + str(label) for label in labels], fontsize=8, fontname='Helvetica' )
     ax.tick_params(axis='y', which='both', left=True, right=False, labelleft=True, labelright=False)
-
-    # Manually adjust the y-axis tick positions
-   
-    # ax.set_yticklabels(['Top ' + str(label) for label in labels], fontsize=24, fontname='Helvetica')
-    # ax.tick_params(axis='y', which='both', left=True, right=False, labelleft=True, labelright=False, pad=-20)  # Adjust pad as needed
-
-
-
-    #ax.yaxis.set_label_coords(-5, 0.5)  # Adjust the coordinates as needed
-
-    #ax.set_yticklabels(['Top ' + str(label) for label in labels],fontsize = 28, fontname='Helvetica')
     
     # Set plot title and labels
     ax.set_title("Performance on Top N models",  fontsize=8, fontweight='bold')
-    #ax.set_xlabel("Models")
-    #ax.set_ylabel("T")
     
     # Remove ticks and labels on the top and right spines
     ax.spines['top'].set_visible(False)
@@ -284,7 +238,6 @@ def make_rmsd_plot_all_at_one(l_dict, labels, rmsd_plot_name="rmsd_plot"):
     plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
     
     # Show the plot
-    #plt.show()
     plt.savefig(rmsd_plot_name+'.png',bbox_inches='tight',  dpi=300)
     plt.savefig(rmsd_plot_name+'.pdf',bbox_inches='tight',  dpi=300)
 
@@ -292,20 +245,16 @@ def make_rmsd_plot_all_at_one(l_dict, labels, rmsd_plot_name="rmsd_plot"):
 
 
 def calculate_color_percentages(color_matrix, labels):
-    # num = np.zeros(len( ))
-    # print(num)
     percentages = {}
     color_counts = np.zeros((6,4),dtype=float)
     for i, label in enumerate(labels):
 
         counts = {'darkgreen': 0, 'green': 0, 'lightgreen': 0, 'white': 0 }
 
-        # counts = {'white': 0, 'lightgreen': 0, 'green': 0, 'darkgreen': 0}
         for model_colors in color_matrix:
             counts[model_colors[i]] += 1
         total = sum(counts.values())
         percentages[label] = {color: (count / total) * 100 for color, count in counts.items()}
-        #print(percentages.values())
         color_counts[i]=list(percentages[label].values())
     return color_counts, percentages
 
@@ -341,30 +290,10 @@ def plot_success_rate(data, success_plot_file):
                  color_discrete_map={color: color for color in desired_order})
 
     # Update layout to adjust bar spacing
-    # fig.update_layout(bargap=0.1, font=dict(size=40),xaxis_title="Top")
-    # fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(len(df))), ticktext=['Top '+str(val) for val in df['Top']]))
-
-    #fig.update_xaxes(showticklabels=False)
     fig.update_layout(bargap=0.1, font=dict(size=60),xaxis=dict(tickmode='array', ticktext=['Top '+str(val) for val in df['Top']]), title_x=0.5, title=dict(y=0.98), legend_title_text='Model Quality')
-    #fig.update_xaxes(showticklabels=True)
 
     # Update legend labels
     legend_labels = {'#003600': 'High', 'green': 'Medium', 'lightgreen': 'Acceptable', 'white': 'Incorrect'}
-
-    # for color, label in legend_labels.items():
-    #     fig.for_each_trace(lambda t: t.update(marker=dict(color=color, size=20)))
-
-    # fig.for_each_trace(lambda t: t.update(name = legend_labels[t.name],
-    #                                   legendgroup = legend_labels[t.name],
-    #                                   hovertemplate = t.hovertemplate.replace(t.name, legend_labels[t.name])
-    #                                  )
-    #               )
-    # for color, label in legend_labels.items():
-    #     fig.for_each_trace(lambda t: t.update(name=label,
-    #                                         legendgroup=label,
-    #                                         hovertemplate=t.hovertemplate.replace(t.name, label),
-    #                                         base=0)
-    #                     )
     
     # Update legend labels for each trace
     for color, label in legend_labels.items():
@@ -381,15 +310,6 @@ def plot_success_rate(data, success_plot_file):
     # Add hover text for each trace
     for trace in fig.data:
         trace.hovertext = [f"{label}: {y:.2f}%" for label, y in zip(df['Top'], trace.y)]
-
-    # # Add stacked labels
-    # for trace in fig.data:
-    #     y_values = trace.y
-    #     text_values = [f"{y:.2f}%" for label, y in zip(df['Top'], y_values)]
-    #     trace.text = text_values
-    #     trace.textposition = 'inside'
-    #     trace.textangle = 0  # Set text angle to 0 for horizontal labels
-
 
 
     # Save the plot as an HTML file

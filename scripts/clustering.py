@@ -1,7 +1,7 @@
 """Script to cluster based on Cluspro
 
 Greedy clustering
-Author: Jan Aarts
+Author: Yannick Aarts
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5540229/pdf/nihms883869.pdf
 Cluspro paper:
 We calculate IRMSD values for each pair 

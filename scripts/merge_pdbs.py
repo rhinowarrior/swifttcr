@@ -2,7 +2,7 @@
 Name: merge_pdbs.py
 Function: Script to merge pdb files and rename chains to A for receptor and D for ligand. The receptor (pMHC) has 3 chains A,B and C and the ligand (TCR) has 2 chains D and E.
 Date: 2021-07-07
-Author: Jan Aarts
+Author: Yannick Aarts
 """
 
 """

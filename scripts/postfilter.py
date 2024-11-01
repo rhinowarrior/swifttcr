@@ -1,4 +1,8 @@
-"""Script to filter piper results based on distance between atoms.
+"""
+Name: postfilter.py
+Function: This script is used to filter piper results based on distance between atoms.
+Date: 08-06-2024
+Author: Yannick Aarts
 
 Inputs: Ft file with piper results, prm file with rotations, distance restraint file.
 """

@@ -23,7 +23,7 @@ Todo list:
 - Add a way in the Readme to install the tools that are used in the pipeline.
 - Put all os.system commands in subprocess.run commands. [fixed]
 - multiprocess the merge_pdbs.py script
-- put the master branch of pdb-tools in the tools directory so that we don't have to call commandline command for merging and the initial placement.
+- put the master branch of pdb-tools in the tools directory so that we don't have to call commandline command for merging and the initial placement. [fixed]
 """
 
 import os.path

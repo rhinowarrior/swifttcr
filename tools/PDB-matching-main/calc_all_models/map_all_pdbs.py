@@ -50,9 +50,12 @@ def main():
 
     # Use multiprocessing with Pool
     with mp.Pool(processes=max_threads) as pool:
-        # Map the tasks to the pool of processes with error handling
-        results = pool.starmap(map_and_save_pdbs, tasks)
-
+        for i in range(0, len(tasks), max_threads):
+            batch = tasks[i:i+max_threads]
+            gc.collect()
+            pool.starmap(map_and_save_pdbs, batch)
+            gc.collect()  # Explicitly call garbage collection after each batch
+    
 def create_model_dict(pipeline_dir):
     """Return a dictionary of models based on the structure of the directory.
     

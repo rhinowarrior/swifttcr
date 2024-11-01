@@ -20,6 +20,7 @@ import os
 from sys import argv
 from pdb2sql.StructureSimilarity import StructureSimilarity
 from multiprocessing import Pool
+import gc
 
 def add_suffix(path, suffix):
     """Adds a suffix to the filename and returns the new Path object.
@@ -73,6 +74,11 @@ def calc_LRMSD_decoys(ref_file, decoy_files, thread_num):
 
         except Exception as e:
             print(f"Error in {os.path.basename(decoy_file)}: {str(e)}")
+        
+        finally:
+            # Clean up the StructureSimilarity object
+            del sim
+            gc.collect()
 
     # Clean up the unique Lzone file after processing
     if os.path.exists(lzone_file):
@@ -108,6 +114,18 @@ def process_model(index, model_identifier, file_number, mapped_dir, thread_num):
         print(f"Files do not exist: {ref_file} or {decoy_file}")
         return index, short_model_identifier, file_number, [], [], []  # Empty results for missing files
 
+def set_thread_limit(num_threads):
+    """
+    Sets thread limit for multi-threaded libraries like NumPy, MKL, OpenMP.
+    
+    Args:
+        num_threads (int): Number of threads to use.
+    """
+    os.environ["OMP_NUM_THREADS"] = str(num_threads)
+    os.environ["MKL_NUM_THREADS"] = str(num_threads)
+    os.environ["NUMEXPR_NUM_THREADS"] = str(num_threads)
+    os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
+
 def main():
     mapped_dir = Path(argv[1])        # Directory containing the mapped files
     outfile = Path(argv[2])           # Base output file name
@@ -115,6 +133,8 @@ def main():
 
     # Prepare a list of model identifiers and their corresponding file numbers
     model_dict = {}
+    
+    set_thread_limit(1)  # Set thread limit for multi-threaded libraries
     
     for file in mapped_dir.glob("*_mapped.pdb"):
         parts = file.stem.split("_")
