@@ -19,6 +19,7 @@ from tqdm import tqdm
 mp.set_sharing_strategy('file_system')
 mp.set_start_method("spawn", force=True)
 
+# Helper Functions
 def load_ligand_ca_xyzr(pdb_path, chain):
     """Loads CA atoms of a chain from a PDB.
     
@@ -71,129 +72,62 @@ def load_ligand_ca_xyz(pdb_path, chain, residues, residues_dict):
                     and int(line[22:26]) in residues
             ]
         )
-    # Create a tensor with the correct shape and fill it with the coordinates.
     xyz = torch.zeros((len(residues), 3))
     xyz[pxyz[:, 0].long()] = pxyz[:, 1:]
     return xyz
 
 def calc_selection_rmsd(vars):
-    """Calculates the RMSD between two selections of atoms.
-
-    Args:
-        vars (tuple): Tuple with the following variables:
-            template_index (int): Index of the template PDB.
-            xyz_all (torch.Tensor): Tensor with the XYZ coordinates of all PDBs.
-            del_mask (torch.Tensor): Tensor with the deletion mask of all PDBs.
-
-    Returns:
-        list: List of tuples with the RMSD values.
-    """
+    """Calculates the RMSD between two selections of atoms."""
     return _calc_selection_rmsd(*vars)
 
 def _calc_selection_rmsd(template_index, xyz_all, del_mask):
-    """Calculate RMSDs compared to one template.
-    Only looks at PDBs after the template index to avoid duplicates.
-    
-    Args:
-        template_index (int): Index of the template PDB.
-        xyz_all (torch.Tensor): Tensor with the XYZ coordinates of all PDBs.
-        del_mask (torch.Tensor): Tensor with the deletion mask of all PDBs.
-    
-    Returns:
-        list: List of tuples with the RMSD values.
-    """
+    """Calculate RMSDs compared to one template."""
     rmsd_list = []
     xyz_all_current = xyz_all[template_index:]
     del_mask_current = del_mask[template_index:]
 
-    # Create a range tensor for the RMSD calculation.
     pdb_range = torch.arange(start=1, end=len(xyz_all_current))
     del_mask_current = del_mask_current[:1] * del_mask_current[1:]
 
-    # Calculate the RMSD between the template and all other PDBs.
     rmsds = ((xyz_all_current[0] - xyz_all_current[pdb_range]) * del_mask_current).pow(2).reshape(len(xyz_all_current)-1, -1).sum(1).div(del_mask_current.sum(1).squeeze()).sqrt()
     for i in range(1, len(xyz_all_current)):
         rmsd_list.append((template_index, i + template_index, rmsds[i-1].item()))
     return rmsd_list
 
 def _load_ligand_ca_xyzr(vars):
-    """Wrapper function for loading ligand CA atoms with residue numbers.
-
-    Args:
-        vars (tuple): Tuple with the following variables:
-            pdb_path (str): Path to the PDB file.
-            chain (str): Chain to load.
-    
-    Returns:
-        torch.Tensor: Tensor with the CA atoms and residue numbers.
-    """
+    """Wrapper function for loading ligand CA atoms with residue numbers."""
     return load_ligand_ca_xyzr(*vars)
 
 def _load_ligand_ca_xyz(vars):
-    """Wrapper function for loading ligand CA atoms with residue numbers.
-
-    Args:
-        vars (tuple): Tuple with the following variables:
-            pdb_path (str): Path to the PDB file.
-            chain (str): Chain to load.
-            residues (list): List of residues to load.
-            residues_dict (dict): Dictionary of residue numbers to indices.
-
-    Returns:
-        torch.Tensor: Tensor with XYZ coordinates of the CA atoms.
-    """
+    """Wrapper function for loading ligand CA atoms with residue numbers."""
     return load_ligand_ca_xyz(*vars)
 
 def _pad_chain(vars):
-    """Wrapper function for padding missing residues in a residue range.
-
-    Args:
-        vars (tuple): Tuple with the following variables:
-            xyzr (torch.Tensor): Tensor with the CA atoms and residue numbers.
-            low (int): Lowest residue number.
-            high (int): Highest residue number.
-            
-    Returns:
-        torch.Tensor: Tensor with the CA atoms and residue numbers, padded with empty atoms.
-    """
+    """Wrapper function for padding missing residues in a residue range."""
     return pad_chain(*vars)
 
 def pad_chain(xyzr, low, high):
-    """Fill out missing residues in a residue range with empty atoms.
+    """Fill out missing residues in a residue range with empty atoms.""" 
+    # Get all unique residue numbers from the xyzr tensor
+    existing_residues = set(xyzr[:, -1].tolist())
     
-    Args:
-        xyzr (torch.Tensor): Tensor with the CA atoms and residue numbers.
-        low (int): Lowest residue number.
-        high (int): Highest residue number.
+    # Identify missing residues in the range
+    missing_residues = [res for res in range(low, high + 1) if float(res) not in existing_residues]
     
-    Returns:
-        torch.Tensor: Tensor with the CA atoms and residue numbers, padded with empty atoms.
-    """
-    for cur_res in range(low, high+1):
-        if float(cur_res) not in xyzr[:, -1]:
-            # Add a row with zeros for the missing residue.
-            tmp = torch.zeros((1,4))
-            tmp[:, -1] = float(cur_res)
-            # Concatenate the new row to the tensor.
-            xyzr = torch.cat((xyzr, tmp), dim=0)
-    # Sort the tensor by residue number.
-    ind = xyzr[:, -1].argsort(dim=0)
-    xyzr = xyzr[ind]
-    return xyzr
+    # Create a tensor for missing residues with zero coordinates
+    if missing_residues:
+        padding = torch.zeros((len(missing_residues), 4))
+        padding[:, -1] = torch.tensor(missing_residues, dtype=torch.float)
+        
+        # Concatenate existing xyzr with the padding and sort only once
+        xyzr = torch.cat((xyzr, padding), dim=0)
+    
+    # Sort by residue number in the last column
+    sorted_indices = xyzr[:, -1].argsort()
+    return xyzr[sorted_indices]
 
 def load_stack_xyz_all(file_names, chain, residues, n_cores):
-    """Function that pools loading xyz for multiple cores.
-    
-    Args:
-        file_names (list): List of PDB file paths.
-        chain (str): Chain to load.
-        residues (list): List of residues to load.
-        n_cores (int): Number of CPU cores to use.
-    
-    Returns:
-        torch.Tensor: Tensor with the XYZ coordinates of the CA atoms.
-        torch.Tensor: Tensor with the deletion mask.
-    """
+    """Function that pools loading xyz for multiple cores."""
     residues_dict = {i:residues.index(i) for i in residues}
     with mp.Pool(n_cores) as pool:
         xyz_list = list(tqdm(
@@ -211,20 +145,7 @@ def load_stack_xyz_all(file_names, chain, residues, n_cores):
     return xyz, del_mask
 
 def load_stack_xyzr_all(file_names, chain, n_cores):
-    """This function loads the xyz and residue from PDBs and pads any missing residues.
-    This way many PDBs can be loaded in a matrix even if they have deletions.
-    
-    Args:
-        file_names (list): List of PDB file paths.
-        chain (str): Chain to load.
-        n_cores (int): Number of CPU cores to use.
-    
-    Returns:
-        torch.Tensor: Tensor with the CA atoms and residue numbers.
-        torch.Tensor: Tensor with the deletion mask.
-        int: Lowest residue number.
-        int: Highest residue number.
-    """
+    """This function loads the xyz and residue from PDBs and pads any missing residues."""
     with mp.Pool(n_cores) as pool:
         xyzr_list = list(tqdm(
             pool.imap(
@@ -236,13 +157,11 @@ def load_stack_xyzr_all(file_names, chain, n_cores):
             desc="Loading atoms"
         ))
 
-    low = 1e10
-    high = 0
+    low, high = float('inf'), 0
     for xyzr in xyzr_list:
         c_low = xyzr[:, -1].min().int().item()
         c_high = xyzr[: -1].max().int().item()
-        low = c_low if c_low < low else low
-        high = c_high if c_high > high else high
+        low, high = min(low, c_low), max(high, c_high)
 
     with mp.Pool(n_cores) as pool:
         fixed_list = list(tqdm(
@@ -255,7 +174,6 @@ def load_stack_xyzr_all(file_names, chain, n_cores):
             desc="Padding chains"
         ))
 
-    # Stack the tensors and create a deletion mask.
     xyz = torch.stack(fixed_list)
     del_mask = (xyz.abs().sum(2) != 0).unsqueeze(2).float()
 
@@ -263,36 +181,14 @@ def load_stack_xyzr_all(file_names, chain, n_cores):
 
 
 def get_interface_residues(chain1_xyzr, chain2_xyzr, chain1_del_mask, chain2_del_mask, cutoff=8.5):
-    """Returns the interface residues of two CA tensors.
-    
-    Args:
-        chain1_xyzr (torch.Tensor): Tensor with the CA atoms and residue numbers of chain 1.
-        chain2_xyzr (torch.Tensor): Tensor with the CA atoms and residue numbers of chain 2.
-        chain1_del_mask (torch.Tensor): Deletion mask of chain 1.
-        chain2_del_mask (torch.Tensor): Deletion mask of chain 2.
-        cutoff (float, optional): Cutoff for interface detection. Defaults to 8.5.
-    
-    Returns:
-        list: List of interface residues of chain 1.
-        list: List of interface residues of chain 2.
-    """
+    """Returns the interface residues of two CA tensors."""
     chain_1_xyz, chain_2_xyz = chain1_xyzr[:, :-1], chain2_xyzr[:, :-1]
-    
-    # Apply deletion masks to coordinates, excluding empty atoms
     valid_chain_1 = chain_1_xyz[chain1_del_mask.flatten() != 0]
     valid_chain_2 = chain_2_xyz[chain2_del_mask.flatten() != 0]
-    
-    # Calculate distances only on valid atoms
     distances = torch.cdist(valid_chain_1, valid_chain_2)
-
-    # Mask distances based on cutoff
     interface_pairs = distances <= cutoff
-
-    # Map the resulting pairs back to the original residue indices
     chain_1_indices = torch.nonzero(interface_pairs.sum(1)).flatten()
     chain_2_indices = torch.nonzero(interface_pairs.sum(0)).flatten()
-
-    # Get interface residue numbers using the indices in the original tensors
     chain1_residues = [int(chain1_xyzr[i, -1].item()) for i in chain_1_indices]
     chain2_residues = [int(chain2_xyzr[i, -1].item()) for i in chain_2_indices]
 
@@ -300,22 +196,8 @@ def get_interface_residues(chain1_xyzr, chain2_xyzr, chain1_del_mask, chain2_del
 
 
 def _get_interface_residues(vars):
-    """Wrapper function for getting the interface residues.
-
-    Args:
-        vars (tuple): Tuple with the following variables:
-            chain1_xyzr (torch.Tensor): Tensor with the CA atoms and residue numbers of chain 1.
-            chain2_xyzr (torch.Tensor): Tensor with the CA atoms and residue numbers of chain 2.
-            chain1_del_mask (torch.Tensor): Deletion mask of chain 1.
-            chain2_del_mask (torch.Tensor): Deletion mask of chain 2.
-            cutoff (float): Cutoff for interface detection.
-    
-    Returns:
-        list: List of interface residues of chain 1.
-        list: List of interface residues of chain 2.
-    """
+    """Wrapper function for getting the interface residues."""
     return get_interface_residues(*vars)
-
 
 def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_cores=mp.cpu_count(), type="interface"):
     """Type 'interface':

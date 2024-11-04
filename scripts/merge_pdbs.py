@@ -14,7 +14,7 @@ import subprocess
 import os
 import flip_alternative
 from multiprocessing import Pool
-import gc
+from tempfile import NamedTemporaryFile
 
 def run_command(command):
     """
@@ -27,38 +27,39 @@ def run_command(command):
         print(f"Error occurred while running command: {command}")
         print(f"Error message: {e.stderr}")
         raise
-
-def process_ligand(f, receptor_name, p_out):
-    """
-    Process each ligand PDB file to create the merged output.
-    """
-    ligand_name = "{}".format(f.stem + "_rename.pdb")
-    output_E = "{}".format(f.stem + "_Eshift.pdb")
-    output_D = "{}".format(f.stem + "_Dshift.pdb")
-
-    # Shift chain E by 2000 residues and rename to chain D
-    command_shift = f"pdb_selchain -E {f} | pdb_shiftres -2000 | pdb_chain -D > {output_E}"
-    command_lig = f"pdb_selchain -D {f} > {output_D}"
-    command_DE = f"pdb_merge {output_D} {output_E} > {ligand_name}"
-
-    # Merge receptor and ligand into a single file
-    merged_name = "merged_" + str(f).split(".")[1] + ".pdb"
-    merge_command = f"cat {receptor_name} {ligand_name} | grep '^ATOM ' > {Path(p_out, merged_name)}"
-
-    # Run commands in sequence
-    run_command(command_shift)
-    run_command(command_lig)
-    run_command(command_DE)
-    run_command(merge_command)
-
-    # Remove intermediate files
-    os.remove(output_D)
-    os.remove(output_E)
-    os.remove(ligand_name)
     
-    # Force garbage collection after processing each ligand
-    gc.collect()
+def process_ligand(file, receptor_name, p_out):
+    """Process each ligand PDB file to create the merged output.
+    
+    Args:
+        file (str): Path to the ligand file
+        receptor_name (str): Name of the modified receptor file
+        p_out (str): Path to the output directory
+    """
+    with NamedTemporaryFile(suffix=".pdb", delete=True) as temp_E, \
+        NamedTemporaryFile(suffix=".pdb", delete=True) as temp_D, \
+        NamedTemporaryFile(suffix=".pdb", delete=True) as temp_ligand:  # Temporary file for ligand
 
+        # Chain E shift command
+        command_shift = f"pdb_selchain -E {file} | pdb_shiftres -2000 | pdb_chain -D > {temp_E.name}"
+        # Chain D command
+        command_lig = f"pdb_selchain -D {file} > {temp_D.name}"
+        # Merge E and D into the temporary ligand file
+        command_DE = f"pdb_merge {temp_D.name} {temp_E.name} > {temp_ligand.name}"
+
+        # Run commands
+        run_command(command_shift)
+        run_command(command_lig)
+        run_command(command_DE)
+
+        # Generate merged output name based on number after the last period
+        file_number = file.stem.split('.')[-1]  # Extract the number portion
+        merged_name = f"merged_{file_number}.pdb"  # Construct the new file name
+
+        # Merge receptor and ligand into a single file
+        merge_command = f"cat {receptor_name} {temp_ligand.name} | grep '^ATOM ' > {Path(p_out, merged_name)}"
+        run_command(merge_command)
+        
 def merge_pdbs_main(receptor, ligand, output_dir, num_cores):
     """
     Merge pdb files and rename chains to A for receptor and D for ligand.
@@ -84,21 +85,18 @@ def merge_pdbs_main(receptor, ligand, output_dir, num_cores):
     # "pdb_merge pep.pdb mhc.pdb | pdb_tidy > {}; "  # Properly concatenate mhc.pdb and pep.pdb into pMHC.pdb, appending to the output
     # "rm mhc.pdb pep.pdb"  # Remove intermediate files mhc.pdb and pep.pdb
     # ).format(str(p_rec), str(p_rec), receptor_name)
-    receptor_name = "{}".format(p_rec.stem + "_rename.pdb")
-    command = f"pdb_tidy {p_rec} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1  > {receptor_name}"
+    receptor_name = f"{p_rec.stem}_rename.pdb"
+    command = f"pdb_tidy {p_rec} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1 > {receptor_name}"
 
-    # Run receptor command
+    # Process receptor only once
     run_command(command)
     flip_alternative.reorder_residues_in_structure(receptor_name, receptor_name)
 
     if p.is_dir():
         ligand_files = [f for f in p.iterdir() if f.suffix == ".pdb"]
 
-        # Use multiprocessing to process each ligand file in parallel with specified number of cores
-        with Pool(num_cores) as pool:
+        # Use multiprocessing pool with optimized tasks
+        with Pool(num_cores, maxtasksperchild=10) as pool:
             pool.starmap(process_ligand, [(f, receptor_name, p_out) for f in ligand_files])
-        
-        # Collect garbage after all ligand processing
-        gc.collect()
     else:
         print("Ligand path is not a directory.")
