@@ -19,6 +19,15 @@ from tempfile import NamedTemporaryFile
 def run_command(command):
     """
     Helper function to run a command with subprocess.run and handle errors.
+    
+    Args:
+        command (str): The shell command to be executed.
+        
+    Returns:
+        str: The standard output of the command if successful.
+    
+    Raises:
+        subprocess.CalledProcessError: If the command fails.
     """
     try:
         result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)

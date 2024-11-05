@@ -46,7 +46,7 @@ python3 scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_r
 * [ProDy: 2.4.1](https://github.com/prody/ProDy)
 * [torch: 2.4.1](https://pytorch.org/)
 * [pdb2sql: 0.5.3](https://github.com/DeepRank/pdb2sql)
-* [Biopython: 1.79](https://biopython.org/)
+* [Biopython: 1.84](https://biopython.org/)
 
 ## Output Structure Naming Convention initial placement
 
