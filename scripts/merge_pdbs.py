@@ -84,6 +84,28 @@ def merge_pdbs_main(receptor, ligand, output_dir, num_cores):
     p_out = Path(output_dir)
     os.chdir(p_rec.parent)
 
+    # Process receptor only once
+    receptor_name = f"{p_rec.stem}_rename.pdb"
+    command = f"pdb_tidy {p_rec} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1 > {receptor_name}"
+
+    # Run the receptor processing
+    run_command(command)
+    flip_alternative.reorder_residues_in_structure(receptor_name, receptor_name)
+
+    if p.is_dir():
+        ligand_files = [f for f in p.iterdir() if f.suffix == ".pdb"]
+
+        # Calculate chunksize based on number of cores and ligand files
+        total_files = len(ligand_files)
+        chunksize = max(1, total_files // num_cores)  # Ensure at least one file per chunk
+
+        # Use multiprocessing pool with chunksize
+        with Pool(num_cores, maxtasksperchild=10) as pool:
+            pool.starmap(process_ligand, [(f, receptor_name, p_out) for f in ligand_files], chunksize=chunksize)
+    else:
+        print("Ligand path is not a directory.")
+        
+        
     # This command makes it so the peptide chain is seperated from chain A in the receptor because the peptide chain with the current code made part of the mhc and it tries to connect to it in pymol.
     # This command doesn't work because in pairwise_rmsd.py it tries to pad the chains which crashes the programm so this will work once we replace gradpose with our own code.
     # command = (
@@ -94,18 +116,3 @@ def merge_pdbs_main(receptor, ligand, output_dir, num_cores):
     # "pdb_merge pep.pdb mhc.pdb | pdb_tidy > {}; "  # Properly concatenate mhc.pdb and pep.pdb into pMHC.pdb, appending to the output
     # "rm mhc.pdb pep.pdb"  # Remove intermediate files mhc.pdb and pep.pdb
     # ).format(str(p_rec), str(p_rec), receptor_name)
-    receptor_name = f"{p_rec.stem}_rename.pdb"
-    command = f"pdb_tidy {p_rec} | pdb_selchain -A,B,C | pdb_chain -A | pdb_reres -1 > {receptor_name}"
-
-    # Process receptor only once
-    run_command(command)
-    flip_alternative.reorder_residues_in_structure(receptor_name, receptor_name)
-
-    if p.is_dir():
-        ligand_files = [f for f in p.iterdir() if f.suffix == ".pdb"]
-
-        # Use multiprocessing pool with optimized tasks
-        with Pool(num_cores, maxtasksperchild=10) as pool:
-            pool.starmap(process_ligand, [(f, receptor_name, p_out) for f in ligand_files])
-    else:
-        print("Ligand path is not a directory.")

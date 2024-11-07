@@ -9,8 +9,7 @@ from argparse import FileType
 import numpy as np
 from itertools import islice
 import linecache
-import multiprocessing as mp
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
 from Bio.PDB import PDBParser, PDBIO, Structure
 
 FTRESULT_DTYPE = np.dtype([('roti', 'i4'), ('tv', ('f8', 3)), ('E', 'f8')])
@@ -117,7 +116,7 @@ def apply_results_worker(args):
     Args:
         args: A tuple with the index, ftfile, rotations, pdb_file, and out_prefix
     """
-    index, ftfile, rotations, pdb_file, out_prefix = args
+    index, ftfile, rotations, pdb_file, out_prefix, ftresults_shared = args
     parser = PDBParser(QUIET=True)
     structure: Structure = parser.get_structure("structure", pdb_file)
 
@@ -151,11 +150,12 @@ def apply_results_main(limit, index, rotation, out_prefix, ftfile, rotations_pat
         pdb_file (str): The path to the pdb file to read from.
     """
     
+    manager = Manager()
+    ftresults_shared = manager.list()  # Shared list between processes
     rotations = read_rotations(rotations_path)
-    tasks = []
 
     if index is not None:
-        tasks.append((index, ftfile, rotations, pdb_file, out_prefix))
+        ftresults_shared.append(get_ftresult(ftfile, index))    
     elif rotation is not None:
         parser = PDBParser(QUIET=True)
         structure: Structure = parser.get_structure("structure", pdb_file)
@@ -165,8 +165,9 @@ def apply_results_main(limit, index, rotation, out_prefix, ftfile, rotations_pat
         return
     else:
         ftresults = read_ftresults(ftfile, limit=limit)
-        indices = range(len(ftresults))
-        tasks.extend([(i, ftfile, rotations, pdb_file, out_prefix) for i in indices])
-
+        for i in range(len(ftresults)):
+            ftresults_shared.append(ftresults[i])
+        
+    tasks = [(i, ftfile, rotations, pdb_file, out_prefix, ftresults_shared) for i in range(len(ftresults_shared))]
     with Pool(cores) as pool:
         pool.map(apply_results_worker, tasks) 
