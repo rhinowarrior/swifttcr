@@ -1,12 +1,15 @@
-# SwiftTCR
+# SwiftTCR: Efficient computational docking protocol of TCRpMHC-I complexes using restricted rotation matrices
 
 ## Overview
-**SwiftTCR** is a powerful tool designed to predict bindings between T-cell receptors (TCR) and peptide-MHC complexes.
+**SwiftTCR** is a fast fast fourier transform based rigid-body docking tool designed to predict bindings between T-cell receptors (TCR) and peptide-MHC complexes.
+
+Link to the paper: [SwiftTCR](https://www.biorxiv.org/content/10.1101/2024.05.27.596020v2.full)
 
 ## Features
 - Predict binding interactions between TCRs and peptide-MHC.
 - User-friendly command-line interface.
 - Efficient clustering algorithms for data analysis.
+- With 12 CPU cores it takes around 260 seconds.
 
 ## Getting Started
 
@@ -167,13 +170,4 @@ Verify the installations by checking the versions:
 ```bash
 python2.7 --version
 python3 --version  # This will point to Python 3.12.9 in the active Conda environment.
-```
-
-## Additional Notes
-- The `.local` directory is used as an example; you can choose a different directory if preferred.
-- To switch between Python versions, activate the Conda environment using `conda activate swifttcr` for Python 3.12.9 and use `python2.7` for Python 2.
-- Ensure you deactivate your Conda environment when you're done working by running:
-
-```bash
-conda deactivate
 ```
