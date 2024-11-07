@@ -1,7 +1,7 @@
 # SwiftTCR: Efficient computational docking protocol of TCRpMHC-I complexes using restricted rotation matrices
 
 ## Overview
-**SwiftTCR** is a fast fast fourier transform based rigid-body docking tool designed to predict bindings between T-cell receptors (TCR) and peptide-MHC complexes.
+**SwiftTCR** is a fast fourier transform based rigid-body docking tool designed to predict bindings between T-cell receptors (TCR) and peptide-MHC complexes.
 
 Link to the paper: [SwiftTCR](https://www.biorxiv.org/content/10.1101/2024.05.27.596020v2.full)
 
