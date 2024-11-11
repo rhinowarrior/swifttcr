@@ -31,13 +31,13 @@ conda activate swifttcr
 Use the following command to execute SwiftTCR:
 
 ```bash
-python3 scripts/swift_tcr.py -r /your/input/peptide-mhc -l /your/input/tcr -o output_directory -op output_prefix -c number_of_cores -t clustering_threshold (default=9)
+python3 scripts/swift_tcr.py -r /your/input/peptide-mhc -l /your/input/tcr -o output_directory -op output_prefix -c number_of_cores -t clustering_threshold (default=9) -m amount_of_models_generated
 ```
 <br />
 
 **Example command:**
 ```bash
-python3 scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_renumbered.pdb -l example/input/benchmark_dataset/3w0w/3w0w_tcr.pdb -o example/output/ -op first_test -c 6 -t 9
+python3 scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_renumbered.pdb -l example/input/benchmark_dataset/3w0w/3w0w_tcr.pdb -o example/output/ -op first_test -c 6 -t 9 -m 100
 ```
 
 ## Dependencies:
@@ -46,28 +46,77 @@ python3 scripts/swift_tcr.py -r example/input/benchmark_dataset/3w0w/3w0w_pmhc_r
 * [anarci: 2021.02.04](https://github.com/oxpig/ANARCI) 
 * [gradpose: 0.1](https://github.com/X-lab-3D/GradPose)
 * [pdb-tools: 2.5.0](http://www.bonvinlab.org/pdb-tools/)
-* [ProDy: 2.4.1](https://github.com/prody/ProDy)
 * [torch: 2.4.1](https://pytorch.org/)
 * [pdb2sql: 0.5.3](https://github.com/DeepRank/pdb2sql)
 * [Biopython: 1.84](https://biopython.org/)
 
-## Output Structure Naming Convention initial placement
+## Output SwiftTCR
 
-### Peptide-MHC Chains
+### Output Structure Naming Convention initial placement
+
+#### Peptide-MHC Chains
 - **A** = MHC (Not IMGT numbered)
 - **B** = β2m (Not IMGT numbered)
 - **C** = Peptide (Not IMGT numbered)
 
-### TCR Chains
+#### TCR Chains
 - **D** = TCR Alpha Chain (IMGT numbered)
 - **E** = TCR Beta Chain (IMGT numbered)
 
-## Output Structure Naming Convetion SwiftTCR
+### Output Structure Naming Convetion SwiftTCR
 
-### TCR-Peptide-MHC
+#### TCR-Peptide-MHC
 - **A** = The ABC Chains of original Peptide-MHC combined
 - **D** = The Alpha and Beta chains of TCR combined
 
+### Structure of output folder
+The output is a folder, named using the specified output prefix, created within the designated output directory. This folder contains the following files and subfolders:
+```
+output
+    └── 3w0w
+        ├── 3w0w
+        ├── 3w0w_pmhc_renumbered_pnon.ms
+        ├── 3w0w_pmhc_renumbered_pnon.pdb
+        ├── 3w0w_pmhc_renumbered_pnon_rename.pdb
+        ├── clustering.txt
+        ├── ft.000.00
+        ├── ft.001.00
+        ├── ft.002.00
+        ├── ft.003.00
+        ├── ft.004.00
+        ├── ft.005.00
+        ├── ft.006.00
+        ├── ft.007.00
+        ├── irmsd.csv
+        ├── merged
+        │   └── merged_0.pdb
+        ├── renumbered_3w0w_tcr.pdb
+        ├── renumbered_3w0w_tcr_pnon.ms
+        ├── renumbered_3w0w_tcr_pnon.pdb
+        └── rotated
+            └── 3w0w.0.pdb
+```
+
+#### Merged folder
+A Folder that contains the predicted structures of the TCR-peptide-MHC.
+
+#### Rotated folder
+A folder that contains the rotated structures that where made with the use of the PIPER energies.
+
+#### irmsd.csv
+A .csv file that contains the iRMSD between all the merged files.
+
+#### ft. files
+These files contain the energies calculated by PIPER and are sorted on lowest energies first.
+
+#### pnon.pdb files
+Input structures that have been prepared and been aligned to a reference structure. They also have the same chainIDs as the reference structures.
+
+#### .ms files
+These files have added attractions that is used to run PIPER.
+
+#### clustering.txt
+This file is the output that contains the top ranked models and how many neigbours that where found with near the model.
 ---
 
 # Installing Python 2.7 and Python 3.12.9 in a Conda Environment
