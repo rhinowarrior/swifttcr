@@ -4,7 +4,7 @@
 
 # Check if the correct number of arguments is provided
 if [ "$#" -ne 5 ]; then
-    echo "Usage: $0 <input_directory> <reference_structures_directory> <output_directory_map_pdbs> <name_clustering_file> <number_of_cores> <output_file_name>"
+    echo "Usage: $0 <input_directory> <reference_structures_directory> <output_directory_map_pdbs> <number_of_cores> <output_file_name>"
     exit 1
 fi
 

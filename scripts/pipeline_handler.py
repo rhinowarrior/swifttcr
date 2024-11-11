@@ -21,6 +21,7 @@ def get_arguments():
     parser.add_argument("--outprefix", "-op", required=True, help="Name of the output file")
     parser.add_argument("--cores", "-c", required=True, type=int ,help="Amount of cores to use")
     parser.add_argument("--threshold", "-t", required=False, type=int, help="Threshold for clustering default is 9")
+    parser.add_argument("--models", "-m", required=False, type=int, help="Amount of models that are generated default is 1000", default=1000)
     args = parser.parse_args()
     return args
 

@@ -62,6 +62,7 @@ if __name__ == "__main__":
     reference_receptor = os.path.realpath("ref/2bnr_l_u.pdb")
     rotations = os.path.realpath("rotations_and_restraints/filtered_cr_in_60.prm")
     restraint_path =  os.path.realpath("rotations_and_restraints/restraintsDE.json")
+    amount_of_models = args.models
     output_path = os.path.join(os.path.realpath(args.output), args.outprefix)
 
     if not os.path.exists(os.path.realpath(args.output)):
@@ -163,16 +164,16 @@ if __name__ == "__main__":
     
     end_time_prep = time.time()
     
-    print(f"Time taken for piper: {end_time_prep - start_time_piper} seconds")
+    # print(f"Time taken for piper: {end_time_prep - start_time_piper} seconds")
 
-    # runs postfilter
-    time_start_postfilter = time.time()
-    postfilter.post_filter_main(output_path, "ft.000.00", rotations, restraint_path, receptor, ligand, str(args.outprefix), cores)
-    time_end_postfilter = time.time()
+    # # runs postfilter
+    # time_start_postfilter = time.time()
+    # postfilter.post_filter_main(output_path, "ft.000.00", rotations, restraint_path, receptor, ligand, str(args.outprefix), cores)
+    # time_end_postfilter = time.time()
     
-    print(f"Time taken for postfilter: {time_end_postfilter - time_start_postfilter} seconds")
+    # print(f"Time taken for postfilter: {time_end_postfilter - time_start_postfilter} seconds")
     
-    print("Finished with filtering pipeline results")
+    # print("Finished with filtering pipeline results")
 
     # checks if the rotated directory exists, if not it creates it
     if not os.path.exists("rotated"):
@@ -181,6 +182,9 @@ if __name__ == "__main__":
 
     # runs apply_results
     time_start_apply_results = time.time()
+    # for now postfilter is not used
+    #apply_results.apply_results_main(amount_of_models, None, None,  args.outprefix, os.path.join(output_path, args.outprefix), os.path.join(output_path,rotations), os.path.join(output_path,ligand), cores)
+    
     apply_results.apply_results_main(1000, None, None,  args.outprefix, os.path.join(output_path, "ft.000.00"), os.path.join(output_path,rotations), os.path.join(output_path,ligand), cores)
     time_end_apply_results = time.time()
 
