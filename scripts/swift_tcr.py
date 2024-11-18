@@ -162,16 +162,12 @@ if __name__ == "__main__":
     
     print("Finished with running piper")
     
-    end_time_prep = time.time()
+    end_time_piper = time.time()
     
-    # print(f"Time taken for piper: {end_time_prep - start_time_piper} seconds")
+    print(f"Time taken for piper: {end_time_piper - start_time_piper} seconds")
 
     # # runs postfilter
-    # time_start_postfilter = time.time()
     # postfilter.post_filter_main(output_path, "ft.000.00", rotations, restraint_path, receptor, ligand, str(args.outprefix), cores)
-    # time_end_postfilter = time.time()
-    
-    # print(f"Time taken for postfilter: {time_end_postfilter - time_start_postfilter} seconds")
     
     # print("Finished with filtering pipeline results")
 
