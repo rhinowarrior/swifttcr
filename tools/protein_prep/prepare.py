@@ -152,11 +152,12 @@ def libmol_norm(in_pdb, out_pdb):
 def pdbpqr(base_dir, pdb, chains):
     pdb_prefix = pdb[:-4]
 
-    genout       = pdb_prefix+"_pgen.pdb";
-    pqr          = pdb_prefix+"_pmin.pqr";
-    nonminout    = pdb_prefix+"_pnon.pdb";
-    outmol       = pdb_prefix+"_pmin.mol.pdb";
-    outmol2      = pdb_prefix+"_pmin.mol2.pdb";
+    genout = pdb_prefix + "_pgen.pdb"
+    pqr = pdb_prefix + "_pmin.pqr"
+    nonminout = pdb_prefix + "_pnon.pdb"
+    outmol = pdb_prefix + "_pmin.mol.pdb"
+    outmol2 = pdb_prefix + "_pmin.mol2.pdb"
+    pmin_log = pdb_prefix + "_pmin.log"  # Log file path
 
     chains = [x.upper() for x in chains]
 
@@ -166,20 +167,40 @@ def pdbpqr(base_dir, pdb, chains):
         extract_chains(pdb, chains, genout)
 
     filter_missing_backbone(genout, genout)
+
+    # Updated PDB2PQR command with new options
+    pdb2pqr_command = [
+        "pdb2pqr",
+        "--ff=CHARMM",  # Forcefield selection
+        "--nodebump",  # Skip debumping
+        "--noopt",  # Skip optimization
+        "--keep-chain",  # Retain chain IDs
+        "--pdb-output", outmol,  # Specify intermediate PDB output
+        genout,  # Input PDB file
+        pqr  # Output PQR file
+    ]
+
+    # Running the PDB2PQR process
     with open('error_log', 'a') as err_out, open('output_log', 'a') as out_f:
-        subprocess.call(['python2', base_dir+'/pdb2pqr-1.9.0/pdb2pqr.py', '--nodebump', '--noopt', '--mol_charmm_pdb', '--chain', '--ff=LIBMOL', '--ffout=LIBMOL', genout, pqr], stdout=out_f, stderr=err_out)
+        subprocess.call(pdb2pqr_command, stdout=out_f, stderr=err_out)
+
+    # Updating for CHARMM forcefield adjustments
     cd1_to_cd(outmol, outmol2)
     libmol_norm(outmol2, nonminout)
 
+    # Clean up intermediate files
     os.unlink(genout)
     os.unlink(pqr)
     os.unlink(outmol)
     os.unlink(outmol2)
     os.unlink('error_log')
     os.unlink('output_log')
-    
-    return nonminout
 
+    # Clean up the pmin.log file after processing
+    if os.path.exists(pmin_log):
+        os.unlink(pmin_log)
+
+    return nonminout
 def prepare_main(pdb_file, chains=[]):
     base_dir=os.path.dirname(os.path.abspath(__file__))
     nominout = pdbpqr(base_dir, pdb_file, chains)

@@ -14,6 +14,7 @@ import torch
 import torch.multiprocessing as mp
 import gradpose
 from tqdm import tqdm
+import re
 
 # Setting these to stop issues on the cluster
 mp.set_sharing_strategy('file_system')
@@ -351,6 +352,8 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
 
     # Read all PDB file names from the names file.
     file_names = glob.glob(os.path.join(models_path, "*.pdb"))
+    # Makes sure the files are sorted by the number in the file name
+    file_names = sorted(file_names, key=lambda x: int(os.path.splitext(os.path.basename(x))[0].split('_')[1]))
     print(f"{len(file_names)=}")
 
     start_time = time.perf_counter()
@@ -425,7 +428,6 @@ def calc_rmsd(models_path, rmsd_path, chain_1, chain_2, interface_cutoff=10., n_
     print("Processing RMSDs...")
     rmsd_list = list(itertools.chain.from_iterable(reversed(rmsd_lists)))
 
-    # Write RMSDs to file.
     if rmsd_path:
         with open(rmsd_path, "w", encoding="utf-8") as rmsd_file:
             for rmsd in tqdm(rmsd_list, desc="Saving RMSDs to file"):

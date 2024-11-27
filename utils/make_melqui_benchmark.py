@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib
 import numpy as np
+import os.path
 import pandas as pd
 from sys import argv
 from pathlib import Path
@@ -99,7 +100,7 @@ def create_melqui_plot(tsv_file, outfilename):
     ax.set_ylabel('Energy rank \n(lower is better)', fontsize=14)
 
     # Set title with additional space above
-    plt.title("Melquiplot", fontsize=18)
+    plt.title(os.path.basename(outfilename), fontsize=18)
 
     # Create legend for rigid and non-rigid model types with quality color mapping
     legend_patches = [
@@ -125,5 +126,5 @@ def create_melqui_plot(tsv_file, outfilename):
 
 if __name__ == "__main__":
     tsv_file = argv[1]
-    outfilename = Path(argv[2])
-    create_melqui_plot(tsv_file, outfilename)
+    output = Path(argv[2])
+    create_melqui_plot(tsv_file, output)

@@ -18,9 +18,7 @@ Iterates over directories with _60_ms or KB.
 """
 import csv
 from typing import List, Tuple
-from sys import argv
 from pathlib import Path
-
 
 def read_irmsd_values(file_path: str) -> List[Tuple[str, str, float]]:
     """Read the irmsd values from file and returns a list of tuples.
@@ -39,7 +37,7 @@ def read_irmsd_values(file_path: str) -> List[Tuple[str, str, float]]:
     return irmsd_values
 
 
-def create_dict(irmsd_values, threshold = 9):
+def create_dict(irmsd_values, threshold=9):
     """Create dictionary with key: model_name, and value [(model2, irmsd)].
     Threshold sets the maximum irmsd values included in the dictionary. (Default 9A as done in Cluspro)
     
@@ -50,7 +48,6 @@ def create_dict(irmsd_values, threshold = 9):
     Returns:
         irmsd_dict: Dictionary with key: model_name, and value [(model2, irmsd)].
     """
-
     irmsd_dict = {}
     for (m1, m2, value) in irmsd_values:
         if value <= threshold:
@@ -65,7 +62,7 @@ def create_dict(irmsd_values, threshold = 9):
     return irmsd_dict
 
 
-def cluster(irmsd_dict, nr_of_clusters = 100):
+def cluster(irmsd_dict, nr_of_clusters=100):
     """Greedy clustering of largest clusters based on irmsd.
     Keeps track of visited models with set(). Iterates over all keys and selects the largest cluster. 
     Then removes (hides with set()) those models from the dataset.
@@ -80,91 +77,58 @@ def cluster(irmsd_dict, nr_of_clusters = 100):
     
     visited = set()
     clusters = []
-    while len(clusters)< nr_of_clusters:#nr of clusters
+    while len(clusters) < nr_of_clusters:
         count_dict = {}
         for key1 in irmsd_dict.keys():
             neighbors = 0
-            if not key1 in visited:
+            if key1 not in visited:
                 for (model, _) in irmsd_dict[key1]:
-                    if not model in visited:
+                    if model not in visited:
                         neighbors += 1
                 count_dict[key1] = neighbors
-        #get the largest cluster.
-        if len(count_dict.items())>0:
-            (model, count) = sorted(count_dict.items(),key=lambda x:x[1], reverse=True)[0]
+        # Get the largest cluster.
+        if count_dict:
+            (model, count) = max(count_dict.items(), key=lambda x: x[1])
         else:
             return clusters
         
-        visited.add(model)#hide center model from dataset.
+        visited.add(model)  # Hide center model from dataset.
         members = []
-        for (member, _) in irmsd_dict[model]:#hide all members from dataset.
+        for (member, _) in irmsd_dict[model]:  # Hide all members from dataset.
             visited.add(member)
             members.append(member.split("_")[1].strip(".pdb"))
         clusters.append((model, count, members))
     return clusters
 
 
-def clustering_main(input_file, treshold = 9,directory = None):
+def clustering_main(input_file, treshold=9, output_file=None,nr_of_clusters=100):
     """Main function for clustering based on irmsd values.
     
     Args:
         input_file: Path to the pairwise irmsd values csv file.
-        directory: Path to the directory with the irmsd values. (Default None)
+        treshold: Maximum irmsd value to include in the dictionary. (Default 9)
+        nr_of_clusters: Number of clusters to output. (Default 100)
+        output_file: Optional path to save the clustering output. If None, output is printed only.
     
     Returns:
         clusters: List of tuples with (model_name, nr_of_neighbors, [members])
     """
-    if directory == None:
-        irmsd_values = read_irmsd_values(input_file)
-    # If directory is given, iterate over all files in the directory. but is never given maybe remove this.
-    elif directory != None:
-        pipeline_dir = argv[1]
-        p = Path(pipeline_dir)
-        for f in p.iterdir():
-            if "_60" in f.stem or "KB" in f.stem or "_120" in f.stem  or "_TCR_" in f.stem or "6mpp_1"and f.is_dir():
-                try:
-                    fname = "clustering_{}.txt".format(int(argv[2]))
-                    fh = open(str(Path(f, fname)), 'w')
-                    memberlistname = "member_list_{}.txt".format(int(argv[2]))
-                    fm = open(str(Path(f, memberlistname)), 'w')
-                    irmsd_values = read_irmsd_values(str(Path(f, 'irmsd.csv')))
-                    irmsd_dict = create_dict(irmsd_values, int(argv[2]))
-                    if irmsd_dict.keys():
-                        clusters = cluster(irmsd_dict)
-                        count_dict ={}
-                        for key in irmsd_dict.keys():
-                            neighbors = 0
-                        for (model, _) in irmsd_dict[key]:
-                                neighbors += 1
-                        count_dict[key] = neighbors
-                        for model, neighbors, members in clusters:
-                            outline = "Cluster center: {} with {} neighbors.".format(model, neighbors)
-                            model_i = model.strip(".pdb").split("_")[1]
-                            member_final = "{} {}".format(model_i, members)
-                            print(outline)
-                            fh.write(outline + "\n")
-                            fm.write(member_final + "\n")
-                            
-                    else:
-                        clusters = []
-                    finalline = "Number of clusters found: {}".format( len(clusters))
-                    fh.write(finalline)
-                    fh.close()
-                    fm.close()
-                    print(finalline)
-                except FileNotFoundError:
-                    print("File not found")
-    else:
-        exit(0)
-    # If no directory is given, return the clusters.
+    irmsd_values = read_irmsd_values(input_file)
     irmsd_dict = create_dict(irmsd_values, treshold)
-    clusters = cluster(irmsd_dict)
-    count_dict ={}
-    for key in irmsd_dict.keys():
-            neighbors = 0
-            for (model, _) in irmsd_dict[key]:
-                    neighbors += 1
-            count_dict[key] = neighbors
-    for model, neighbors, members in clusters:
-        print("Cluster center: {} with {} neighbors.".format(model, neighbors))
-    print("Number of clusters found: ", len(clusters))
+    clusters = cluster(irmsd_dict, nr_of_clusters)
+
+    output_lines = []
+    for model, neighbors, _ in clusters:
+        line = f"Cluster center: {model} with {neighbors} neighbors."
+        output_lines.append(line)
+    output_lines.append(f"Number of clusters found: {len(clusters)}")
+    
+    # Handle output writing
+    if output_file:
+        with open(output_file, 'w') as f:
+            f.write('\n'.join(output_lines))
+        print(f"Clustering output written to {output_file}")
+    else:
+        print('\n'.join(output_lines))
+    
+    return clusters

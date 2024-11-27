@@ -178,10 +178,11 @@ if __name__ == "__main__":
 
     # runs apply_results
     time_start_apply_results = time.time()
+    
     # for now postfilter is not used
     #apply_results.apply_results_main(amount_of_models, None, None,  args.outprefix, os.path.join(output_path, args.outprefix), os.path.join(output_path,rotations), os.path.join(output_path,ligand), cores)
     
-    apply_results.apply_results_main(1000, None, None,  args.outprefix, os.path.join(output_path, "ft.000.00"), os.path.join(output_path,rotations), os.path.join(output_path,ligand), cores)
+    apply_results.apply_results_main(1000, None, None,  args.outprefix, os.path.join(output_path, "ft.002.00"), os.path.join(output_path,rotations), os.path.join(output_path,ligand), cores)
     time_end_apply_results = time.time()
 
     print(f"Time taken for apply_results: {time_end_apply_results - time_start_apply_results} seconds")    
@@ -216,18 +217,9 @@ if __name__ == "__main__":
     time_start_clustering = time.time()
     output_file = os.path.join(output_path, 'clustering.txt')
 
-    output_buffer = io.StringIO()
-
-    with redirect_stdout(output_buffer):
-        clustering.clustering_main(os.path.join(output_path, 'irmsd.csv'), treshold)
-
-    captured_output = output_buffer.getvalue()
-
-    with open(output_file, 'w') as file:
-        file.write(captured_output)
+    clustering.clustering_main(os.path.join(output_path, 'irmsd.csv'), treshold, output_file)
 
     print("Finished with clustering the structures")
-    print(f"Output written to {output_file}")
     
     time_end_clustering = time.time()
     print(f"Time taken for clustering: {time_end_clustering - time_start_clustering} seconds")
