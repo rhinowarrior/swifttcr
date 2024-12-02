@@ -1,6 +1,6 @@
 """
 Name: swift_tcr.py
-Function: This script is the main pipeline for the swift_tcr project. It takes a TCR and a p-MHC structure as input and runs a series of programs to predict the orientation of the TCR on the PMHC. And then it calculates the pairwise RMSD between the predicted structures and clusters them based on the RMSD values. The output is a text file with the cluster information and a directory with all the predicted structures of the TCR-p-MHC. 
+Function: This script is the main pipeline for the swiftTCR project. It takes a TCR and a p-MHC structure as input and runs a series of programs to predict the orientation of the TCR on the PMHC. And then it calculates the pairwise RMSD between the predicted structures and clusters them based on the RMSD values. The output is a text file with the cluster information and a directory with all the predicted structures of the TCR-p-MHC. 
 Date: 25-09-2024
 Author: Nils Smit
 """
@@ -19,11 +19,9 @@ Todo list:
 - Fixed a bug in the initial_placement.py script where the chain IDs were not changed correctly because they first change C to D and then D to E where all chains end up as E [Fixed]
 - remove the pdb file prints to stop clogging the output from the pipeline in merge_pdbs.py [Fixed]
 - Discuss with the team if we should remove the directory part of the clustering.py script because it is never used.
-- !!!!!!!!!Check if postfilter.py is still needed.!!!!!
 - Add a way in the Readme to install the tools that are used in the pipeline.
 - Put all os.system commands in subprocess.run commands. [fixed]
-- multiprocess the merge_pdbs.py script
-- put the master branch of pdb-tools in the tools directory so that we don't have to call commandline command for merging and the initial placement. [fixed]
+- multiprocess the merge_pdbs.py script [fixed]
 """
 
 import os.path

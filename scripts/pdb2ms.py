@@ -127,7 +127,7 @@ def pdb2ms_main(file_1, file_2):
         file_2 (str): path to the second pdb file
     """
     #based on the IMGT numbering of the CDR loops
-    attractive_res = {'D':{'start' : [27, 56,105], 'end': [38,65,117]}, 'E': {'start' : [27, 56,105], 'end': [38,65,117]}, 'C':{'start' : [-1], 'end': [1000]}}
+    attractive_res = {'D':{'start' : [26, 55,104], 'end': [39,66,118]}, 'E': {'start' : [26, 55,104], 'end': [39,66,118]}, 'C':{'start' : [-1], 'end': [1000]}}
     
     # make a list of files to process
     file_list = [file_1, file_2]
