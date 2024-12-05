@@ -1,6 +1,6 @@
 """
 Name: calc_rmsd_all.py
-Function: Calculates the RMSD between all models in a directory and a set of reference structures.
+Function: Calculates the LRMSD, IRMSD and Fnat based on a reference and target structure. The RMSD is calculated by getting all the subdirectories in a given directory and getting from those subdirectories the merged directory which contains the files. The program know which reference to compare to because the reference should have the same name as the subdirectory only has the reference _renumberd added to it. The RMSD calculation is done by the tool DockQ.
 Date: 25-11-2024
 Author: Nils Smit, Yannick Aarts, Farzaneh Meimandi Parizi
 """

@@ -15,3 +15,5 @@ dependencies:
       - pdb-tools==2.5.0
       - pdb2sql==0.5.3
       - pdb2pqr==3.6.1
+      - scipy==1.13.1
+      - DockQ==2.1.3
